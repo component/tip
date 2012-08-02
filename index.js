@@ -103,8 +103,7 @@ Tip.prototype.position = function(type){
 Tip.prototype.show = function(el){
   if (!el) throw new Error('.show() element required');
   this.target = o(el);
-  if ('string' == typeof this.content) this.inner.text(this.content)
-  else this.inner.empty().append(this.content);
+  this.inner.empty().append(this.content);
   this.el.appendTo('body');
   this.el.addClass('tip-' + this._position);
   this.reposition();
