@@ -17,19 +17,19 @@ module.exports = Tip;
  * showing a tool-tip on `el` hover.
  *
  * @param {jQuery|String} el
- * @return {Tip}
  * @api public
  */
 
 function tip(el) {
-  el = o(el);
-  var tip = new Tip(el.attr('title'));
-  el.hover(function(){
-    tip.show(el);
-  }, function(){
-    tip.hide(300);
+  o(el).each(function(i, el){
+    el = o(el);
+    var tip = new Tip(el.attr('title'));
+    el.hover(function(){
+      tip.show(el);
+    }, function(){
+      tip.hide(300);
+    });
   });
-  return tip;
 }
 
 /**
