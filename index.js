@@ -45,7 +45,7 @@ function Tip(content) {
   this.pad = 5;
   this.classname = '';
   this.preferred = 'north';
-  this.content = content;
+  this._content = content;
   this.el = $(render('tip'));
   this.inner = this.el.find('.tip-inner');
   this.position('auto');
@@ -104,7 +104,7 @@ Tip.prototype.position = function(type){
 Tip.prototype.show = function(el){
   if (!el) throw new Error('.show() element required');
   this.target = o(el);
-  this.inner.empty().append(this.content);
+  this.inner.empty().append(this._content);
   this.el.appendTo('body');
   this.el.addClass('tip-' + this._position);
   this.reposition();
