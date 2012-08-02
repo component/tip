@@ -129,18 +129,22 @@ Tip.prototype.reposition = function(){
 /**
  * Compute the "best" position.
  *
+ * TODO: east / west as well
+ *
  * @return {String}
  * @api private
  */
 
 Tip.prototype.bestPosition = function(){
-  // TODO: east / west as well
-  var pad = 80;
+  var el = this.el;
+  var ew = el.outerWidth();
+  var eh = el.outerHeight();
+
   var target = this.target;
   var top = o(window).scrollTop();
   var to = target.offset();
 
-  if (top > to.top - pad) return 'south';
+  if (top > to.top - eh) return 'south';
   return 'north';
 };
 
