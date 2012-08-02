@@ -171,7 +171,7 @@ Tip.prototype.offset = function(){
 
   if ('auto' == pos) {
     pos = this.bestPosition();
-    el.attr('class', this.classname + 'tip tip-' + pos + ' ' + this._effect);
+    el.attr('class', this.classname + ' tip tip-' + pos + ' ' + this._effect);
   }
 
   switch (pos) {
