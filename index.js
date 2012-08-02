@@ -43,6 +43,7 @@ function Tip(content) {
   if (!(this instanceof Tip)) return tip(content);
   Emitter.call(this);
   this.pad = 5;
+  this.classname = '';
   this.preferred = 'north';
   this.content = content;
   this.el = $(render('tip'));
@@ -170,7 +171,7 @@ Tip.prototype.offset = function(){
 
   if ('auto' == pos) {
     pos = this.bestPosition();
-    el.attr('class', 'tip tip-' + pos + ' ' + this._effect);
+    el.attr('class', this.classname + 'tip tip-' + pos + ' ' + this._effect);
   }
 
   switch (pos) {
