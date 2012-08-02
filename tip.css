@@ -75,9 +75,9 @@
 /* effects */
 
 .tip.fade {
-  transition: opacity 200ms;
-  -moz-transition: opacity 200ms;
-  -webkit-transition: opacity 200ms;
+  transition: opacity 100ms;
+  -moz-transition: opacity 100ms;
+  -webkit-transition: opacity 100ms;
 }
 
 .tip-hide {
