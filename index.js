@@ -16,7 +16,7 @@ module.exports = Tip;
  * Apply the average use-case of simply
  * showing a tool-tip on `el` hover.
  *
- * @param {jQuery|String} el
+ * @param {Mixed} el
  * @api public
  */
 
@@ -35,7 +35,7 @@ function tip(el) {
 /**
  * Initialize a `Tip` with the given `content`.
  *
- * @param {String|jQuery|Element} content
+ * @param {Mixed} content
  * @api public
  */
 

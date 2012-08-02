@@ -39,7 +39,7 @@ tip('a[title]');
 ### new Tip(content)
 
   Create a new tip with `content` being
-  either a string or element.
+  either a string, html, element, etc.
 
 ```js
 var Tip = require('tip');
