@@ -39,13 +39,13 @@ function tip(el) {
  * @api public
  */
 
-function Tip(content, html) {
+function Tip(content) {
   if (!(this instanceof Tip)) return tip(content);
   Emitter.call(this);
   this.pad = 5;
   this.preferred = 'north';
   this.content = content;
-  this.el = $(html || render('tip'));
+  this.el = $(render('tip'));
   this.inner = this.el.find('.tip-inner');
   this.position('auto');
   if (Tip.effect) this.effect(Tip.effect);
