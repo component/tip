@@ -13,6 +13,26 @@ var Emitter = require('emitter')
 module.exports = Tip;
 
 /**
+ * Apply the average use-case of simply
+ * showing a tool-tip on `el` hover.
+ *
+ * @param {jQuery|String} el
+ * @return {Tip}
+ * @api public
+ */
+
+function tip(el) {
+  el = o(el);
+  var tip = new Tip(el.attr('title'));
+  el.hover(function(){
+    tip.show(el);
+  }, function(){
+    tip.hide(300);
+  });
+  return tip;
+}
+
+/**
  * Initialize a `Tip` with the given `content`.
  *
  * @param {String|jQuery|Element} content
@@ -20,6 +40,7 @@ module.exports = Tip;
  */
 
 function Tip(content) {
+  if (!(this instanceof Tip)) return tip(content);
   Emitter.call(this);
   this.pad = 5;
   this.preferred = 'north';

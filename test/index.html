@@ -32,6 +32,7 @@
     <a href="#" id="south">South</a>
     <a href="#" id="markup">Markup</a>
     <a href="#" id="auto">Auto</a>
+    <a href="#" id="hover" title="I'm using a title attr">Hover</a>
     <script>
       var o = require('jquery');
       var Tip = require('tip');
@@ -57,6 +58,8 @@
 
       var auto = new Tip('Some tip content');
       auto.show('#auto');
+
+      Tip('#hover');
     </script>
   </body>
 </html>

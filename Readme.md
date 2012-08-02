@@ -25,12 +25,23 @@ $ npm install tip-component
 
 ## API
 
+### Tip(el)
+
+  Attach a `Tip` to an element, and display the `title`
+  attribute's contents on hover.
+
+```js
+var tip = require('tip');
+tip('a[title]');
+```
+
 ### new Tip(content)
 
   Create a new tip with `content` being
   either a string or element.
 
 ```js
+var Tip = require('tip');
 var tip = new Tip('Hello!');
 tip.show('#mylink');
 ```
