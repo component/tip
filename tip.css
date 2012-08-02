@@ -3,11 +3,10 @@
   position: absolute;
   padding: 5px;
   z-index: 1000;
-  opacity: 1;
 }
 
 .tip-inner {
-  background-color: #000;
+  background-color: rgba(0,0,0,.75);
   color: #fff;
   max-width: 200px;
   padding: 8px 10px 7px 10px;
@@ -25,13 +24,13 @@
   width: 0;
   height: 0;
   line-height: 0;
-  border: 5px dashed #000;
+  border: 5px dashed rgba(0,0,0,.75);
 }
   
-.tip-arrow-south { border-bottom-color: #000 }
-.tip-arrow-north { border-top-color: #000 }
-.tip-arrow-west { border-left-color: #000 }
-.tip-arrow-east { border-right-color: #000 }
+.tip-arrow-south { border-bottom-color: rgba(0,0,0,.75) }
+.tip-arrow-north { border-top-color: rgba(0,0,0,.75) }
+.tip-arrow-west { border-left-color: rgba(0,0,0,.75) }
+.tip-arrow-east { border-right-color: rgba(0,0,0,.75) }
   
 .tip-south .tip-arrow {
   top: 0px;
