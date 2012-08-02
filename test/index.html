@@ -1,0 +1,62 @@
+<!DOCTYPE 5>
+<html>
+  <head>
+    <title>Tip</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="stylesheet" href="out.css" />
+    <style>
+      body {
+        padding: 60px;
+        font: 300 14px "Helvetica Neue", Helvetica, Arial;
+        min-height: 1000px;
+      }
+      a {
+        display: inline-block;
+        float: left;
+        border: 1px solid #eee;
+        padding: 10px;
+        color: black;
+        text-decoration: none;
+        margin: 55px;
+        width: 100px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <title>Tip</title>
+    <script src="out.js"></script>
+    <a href="#" id="north">North</a>
+    <a href="#" id="east">East</a>
+    <a href="#" id="west">West</a>
+    <a href="#" id="south">South</a>
+    <a href="#" id="markup">Markup</a>
+    <a href="#" id="auto">Auto</a>
+    <script>
+      var o = require('jquery');
+      var Tip = require('tip');
+      Tip.effect = 'fade';
+
+      o('#north,#east,#west,#south').each(function(i, el){
+        var tip = new Tip(el.textContent);
+        tip.position(el.textContent.toLowerCase());
+        o(el).hover(function(){
+          tip.show(el);
+        }, function(){
+          tip.hide(200);
+        })
+      })
+
+      var tip = new Tip(o('<button>:)</button>'));
+      tip.position('north');
+      o('#markup').hover(function(){
+        tip.show(o('#markup'));
+      }, function(){
+        tip.hide(200);
+      })
+
+      var auto = new Tip('Some tip content');
+      auto.show('#auto');
+    </script>
+  </body>
+</html>

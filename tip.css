@@ -1,0 +1,86 @@
+.tip {
+  font-size: 11px;
+  position: absolute;
+  padding: 5px;
+  z-index: 1000;
+  opacity: 1;
+}
+
+.tip-inner {
+  background-color: #000;
+  color: #fff;
+  max-width: 200px;
+  padding: 8px 10px 7px 10px;
+  text-align: center;
+}
+
+.tip-inner {
+  border-radius: 3px;
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+}
+  
+.tip-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  line-height: 0;
+  border: 5px dashed #000;
+}
+  
+.tip-arrow-south { border-bottom-color: #000 }
+.tip-arrow-north { border-top-color: #000 }
+.tip-arrow-west { border-left-color: #000 }
+.tip-arrow-east { border-right-color: #000 }
+  
+.tip-south .tip-arrow {
+  top: 0px;
+  left: 50%;
+  margin-left: -5px;
+  border-bottom-style: solid;
+  border-top: none;
+  border-left-color: transparent;
+  border-right-color: transparent
+}
+
+.tip-north .tip-arrow {
+  bottom: 0;
+  left: 50%;
+  margin-left: -5px;
+  border-top-style: solid;
+  border-bottom: none;
+  border-left-color: transparent;
+  border-right-color: transparent
+}
+
+.tip-west .tip-arrow {
+  right: 0;
+  top: 50%;
+  margin-top: -5px;
+  border-left-style: solid;
+  border-right: none;
+  border-top-color: transparent;
+  border-bottom-color: transparent
+}
+
+.tip-east .tip-arrow {
+  left: 0;
+  top: 50%;
+  margin-top: -5px;
+  border-right-style: solid;
+  border-left: none;
+  border-top-color: transparent;
+  border-bottom-color: transparent
+}
+
+/* effects */
+
+.tip.fade {
+  transition: opacity 200ms;
+  -moz-transition: opacity 200ms;
+  -webkit-transition: opacity 200ms;
+}
+
+.tip-hide {
+  opacity: 0;
+}
