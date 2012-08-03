@@ -222,12 +222,12 @@ Tip.prototype.offset = function(pos){
       }
     case 'south west':
       return {
-        top: to.top + th - th * .75,
+        top: to.top + th - eh * .85,
         left: to.left - ew
       }
     case 'south east':
       return {
-        top: to.top + th - th * .75,
+        top: to.top + th - eh * .85,
         left: to.left + tw
       }
     case 'east':
