@@ -47,6 +47,13 @@ var tip = new Tip('Hello!');
 tip.show('#mylink');
 ```
   
+### Tip#position(type)
+
+  - `north`
+  - `south`
+  - `east`
+  - `west`
+
 ### Tip#show(el)
 
   Show the tip attached to `el`, where `el`

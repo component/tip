@@ -42,13 +42,11 @@ function tip(el) {
 function Tip(content) {
   if (!(this instanceof Tip)) return tip(content);
   Emitter.call(this);
-  this.pad = 5;
   this.classname = '';
-  this.preferred = 'north';
   this._content = content;
   this.el = $(render('tip'));
   this.inner = this.el.find('.tip-inner');
-  this.position('auto');
+  this.position('north');
   if (Tip.effect) this.effect(Tip.effect);
 }
 
@@ -75,7 +73,6 @@ Tip.prototype.effect = function(type){
 /**
  * Set position `type`:
  *
- *  - `auto`
  *  - `north`
  *  - `south`
  *  - `east`
@@ -117,35 +114,53 @@ Tip.prototype.show = function(el){
 };
 
 /**
- * Reposition the tip.
+ * Reposition the tip if necessary.
  *
  * @api private
  */
 
 Tip.prototype.reposition = function(){
-  this.el.css(this.offset());
+  var pos = this._position;
+  var off = this.offset(pos);
+  var newpos = this.suggested(pos, off);
+  if (newpos) off = this.offset(pos = newpos);
+  this.replaceClass(pos);
+  this.el.css(off);
 };
 
 /**
- * Compute the "best" position.
+ * Compute the "suggested" position favouring `pos`.
+ * Returns undefined if no suggestion is made.
  *
- * TODO: east / west as well
- *
+ * @param {String} pos
+ * @param {Object} offset
  * @return {String}
  * @api private
  */
 
-Tip.prototype.bestPosition = function(){
+Tip.prototype.suggested = function(pos, off){
   var el = this.el;
+
   var ew = el.outerWidth();
   var eh = el.outerHeight();
 
-  var target = this.target;
-  var top = o(window).scrollTop();
-  var to = target.offset();
+  var win = o(window);
+  var top = win.scrollTop();
+  var left = win.scrollLeft();
+  var w = win.width();
+  var h = win.height();
 
-  if (top > to.top - eh) return 'south';
-  return 'north';
+  // too high
+  if (off.top < top) return 'south';
+
+  // too low
+  if (off.top + eh > top + h) return 'north';
+
+  // too far to the right
+  if (off.left + ew > left + w) return 'west';
+
+  // too far to the left
+  if (off.left < left) return 'east';
 };
 
 /**
@@ -161,16 +176,15 @@ Tip.prototype.replaceClass = function(name){
 
 /**
  * Compute the offset for `.target`
- * based on the selected gravity.
+ * based on the given `pos`.
  *
+ * @param {String} pos
  * @return {Object}
  * @api private
  */
 
-Tip.prototype.offset = function(){
-  var pos = this._position;
+Tip.prototype.offset = function(pos){
   var el = this.el;
-  var pad = this.pad;
   var target = this.target;
 
   var ew = el.outerWidth();
@@ -179,11 +193,6 @@ Tip.prototype.offset = function(){
   var to = target.offset();
   var tw = target.outerWidth();
   var th = target.outerHeight();
-
-  if ('auto' == pos) {
-    pos = this.bestPosition();
-    this.replaceClass(pos);
-  }
 
   switch (pos) {
     case 'north':
@@ -202,12 +211,12 @@ Tip.prototype.offset = function(){
         left: to.left + tw
       }
     case 'west':
-    return {
-      top: to.top + th / 2 - eh / 2,
-      left: to.left - ew
-    }
+      return {
+        top: to.top + th / 2 - eh / 2,
+        left: to.left - ew
+      }
     default:
-      throw new Error('invalid position "' + this._position + '"');
+      throw new Error('invalid position "' + pos + '"');
   }
 };
 

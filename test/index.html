@@ -21,21 +21,26 @@
         width: 100px;
         text-align: center;
       }
+      #links {
+        min-width: 800px;
+      }
     </style>
   </head>
   <body>
     <title>Tip</title>
     <script src="out.js"></script>
-    <a href="#" id="north">North</a>
-    <a href="#" id="east">East</a>
-    <a href="#" id="west">West</a>
-    <a href="#" id="south">South</a>
-    <a href="#" id="markup">Markup</a>
-    <a href="#" id="auto-north">Auto</a>
-    <a href="#" id="auto-south">Auto</a>
-    <a href="#" id="maru">Maru</a>
-    <a href="#" title="I'm using a title attr">Hover</a>
-    <a href="#" title="I'm another link">Hover</a>
+    <div id="links">
+      <a href="#" id="north">North</a>
+      <a href="#" id="east">East</a>
+      <a href="#" id="west">West</a>
+      <a href="#" id="south">South</a>
+      <a href="#" id="markup">Markup</a>
+      <a href="#" id="auto-north">Auto</a>
+      <a href="#" id="auto-south">Auto</a>
+      <a href="#" id="maru">Maru</a>
+      <a href="#" title="I'm using a title attr">Hover</a>
+      <a href="#" title="I'm another link">Hover</a>
+    </div>
     <script>
       var o = require('jquery');
       var Tip = require('tip');
@@ -69,6 +74,7 @@
       var auto = new Tip('Some tip contents');
       auto.position('south');
       auto.show('#auto-south');
+
 
       Tip('a[title]');
     </script>

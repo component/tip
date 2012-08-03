@@ -1,0 +1,47 @@
+<!DOCTYPE 5>
+<html>
+  <head>
+    <title>Tip</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="stylesheet" href="out.css" />
+    <style>
+      body {
+        padding: 60px;
+        font: 300 14px "Helvetica Neue", Helvetica, Arial;
+        min-height: 1000px;
+      }
+      a {
+        display: inline-block;
+        float: left;
+        border: 1px solid #eee;
+        padding: 10px;
+        color: black;
+        text-decoration: none;
+        margin: 55px;
+        width: 100px;
+        text-align: center;
+      }
+      #links {
+        padding: 800px;
+        width: 1500px;
+        height: 1500px;
+      }
+    </style>
+  </head>
+  <body>
+    <title>Tip</title>
+    <script src="out.js"></script>
+    <div id="links">
+      <a href="#" id="maru">Maru</a>
+    </div>
+    <script>
+      var o = require('jquery');
+      var Tip = require('tip');
+      Tip.effect = 'fade';
+
+      var maru = new Tip('<img src="http://www.lifelounge.com.au/resources/IMGRELATED/maru-magic-show-catbag-youtube-cat-adventure.jpg" width="200" height="100" />');
+      maru.position('north').show('#maru');
+
+    </script>
+  </body>
+</html>
