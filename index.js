@@ -149,6 +149,17 @@ Tip.prototype.bestPosition = function(){
 };
 
 /**
+ * Replace position class `name`.
+ *
+ * @param {String} name
+ * @api private
+ */
+
+Tip.prototype.replaceClass = function(name){
+  this.el.attr('class', this.classname + ' tip tip-' + name + ' ' + this._effect);
+};
+
+/**
  * Compute the offset for `.target`
  * based on the selected gravity.
  *
@@ -171,7 +182,7 @@ Tip.prototype.offset = function(){
 
   if ('auto' == pos) {
     pos = this.bestPosition();
-    el.attr('class', this.classname + ' tip tip-' + pos + ' ' + this._effect);
+    this.replaceClass(pos);
   }
 
   switch (pos) {
