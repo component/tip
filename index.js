@@ -171,6 +171,7 @@ Tip.prototype.suggested = function(pos, off){
  */
 
 Tip.prototype.replaceClass = function(name){
+  name = name.split(' ').join('-');
   this.el.attr('class', this.classname + ' tip tip-' + name + ' ' + this._effect);
 };
 
@@ -200,10 +201,30 @@ Tip.prototype.offset = function(pos){
         top: to.top - eh,
         left: to.left + tw / 2 - ew / 2
       }
+    case 'north west':
+      return {
+        top: to.top,
+        left: to.left - ew
+      }
+    case 'north east':
+      return {
+        top: to.top,
+        left: to.left + tw
+      }
     case 'south':
       return {
         top: to.top + th,
         left: to.left + tw / 2 - ew / 2
+      }
+    case 'south west':
+      return {
+        top: to.top + th - th * .75,
+        left: to.left - ew
+      }
+    case 'south east':
+      return {
+        top: to.top + th - th * .75,
+        left: to.left + tw
       }
     case 'east':
       return {

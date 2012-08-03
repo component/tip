@@ -19,10 +19,18 @@
         text-decoration: none;
         margin: 55px;
         width: 100px;
+        height: 100px;
+        line-height: 100px;
         text-align: center;
       }
       #links {
         min-width: 800px;
+      }
+      .tip-south-west .tip-inner,
+      .tip-south-east .tip-inner,
+      .tip-north-west .tip-inner,
+      .tip-north-east .tip-inner {
+        padding-bottom: 50px;
       }
     </style>
   </head>
@@ -34,6 +42,10 @@
       <a href="#" id="east">East</a>
       <a href="#" id="west">West</a>
       <a href="#" id="south">South</a>
+      <a href="#" id="north-west">North West</a>
+      <a href="#" id="north-east">North East</a>
+      <a href="#" id="south-west">South West</a>
+      <a href="#" id="south-east">South East</a>
       <a href="#" id="markup">Markup</a>
       <a href="#" id="auto-north">Auto</a>
       <a href="#" id="auto-south">Auto</a>
@@ -46,9 +58,9 @@
       var Tip = require('tip');
       Tip.effect = 'fade';
 
-      o('#north,#east,#west,#south').each(function(i, el){
+      o('#north,#east,#west,#south,#north-west,#north-east,#south-west,#south-east').each(function(i, el){
         var tip = new Tip(el.textContent);
-        tip.position(el.textContent.toLowerCase());
+        tip.position(el.textContent.toLowerCase().split('-').join(' '));
         o(el).hover(function(){
           tip.show(el);
         }, function(){

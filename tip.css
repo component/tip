@@ -52,7 +52,9 @@
   border-right-color: transparent
 }
 
-.tip-west .tip-arrow {
+.tip-west .tip-arrow,
+.tip-north-west .tip-arrow,
+.tip-south-west .tip-arrow {
   right: 0;
   top: 50%;
   margin-top: -5px;
@@ -62,7 +64,9 @@
   border-bottom-color: transparent
 }
 
-.tip-east .tip-arrow {
+.tip-east .tip-arrow,
+.tip-north-east .tip-arrow,
+.tip-south-east .tip-arrow {
   left: 0;
   top: 50%;
   margin-top: -5px;
@@ -70,6 +74,16 @@
   border-left: none;
   border-top-color: transparent;
   border-bottom-color: transparent
+}
+
+.tip-north-west .tip-arrow,
+.tip-north-east .tip-arrow {
+  top: 25%;
+}
+
+.tip-south-west .tip-arrow,
+.tip-south-east .tip-arrow {
+  top: 75%;
 }
 
 /* effects */
