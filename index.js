@@ -4,7 +4,7 @@
  */
 
 var Emitter = require('emitter')
-  , $ = require('jquery');
+  , o = require('jquery');
 
 /**
  * Expose `Tip`.
@@ -44,7 +44,7 @@ function Tip(content) {
   Emitter.call(this);
   this.classname = '';
   this._content = content;
-  this.el = $(render('tip'));
+  this.el = o(render('tip'));
   this.inner = this.el.find('.tip-inner');
   this.position('north');
   if (Tip.effect) this.effect(Tip.effect);
