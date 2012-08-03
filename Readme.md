@@ -18,7 +18,7 @@ $ npm install tip-component
 ## Features
 
   - events for composition
-  - "auto" positioning
+  - "auto" positioning on window resize / scroll
   - fluent API
 
 ## Events
