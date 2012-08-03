@@ -52,7 +52,11 @@ tip.show('#mylink');
 ### Tip#position(type)
 
   - `north`
+  - `north east`
+  - `north west`
   - `south`
+  - `south east`
+  - `south west`
   - `east`
   - `west`
 

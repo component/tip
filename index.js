@@ -74,7 +74,11 @@ Tip.prototype.effect = function(type){
  * Set position `type`:
  *
  *  - `north`
+ *  - `north east`
+ *  - `north west`
  *  - `south`
+ *  - `south east`
+ *  - `south west`
  *  - `east`
  *  - `west`
  *
