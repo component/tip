@@ -28,14 +28,15 @@ $ npm install tip-component
 
 ## API
 
-### Tip(el)
+### Tip(el, [options])
 
   Attach a `Tip` to an element, and display the `title`
-  attribute's contents on hover.
+  attribute's contents on hover. Optionally apply a hide `delay`
+  in milliseconds.
 
 ```js
 var tip = require('tip');
-tip('a[title]');
+tip('a[title]', { delay: 300 });
 ```
 
 ### new Tip(content)

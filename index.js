@@ -16,11 +16,17 @@ module.exports = Tip;
  * Apply the average use-case of simply
  * showing a tool-tip on `el` hover.
  *
+ * Options:
+ *
+ *  - `delay` hide delay in milliseconds []
+ *
  * @param {Mixed} el
+ * @param {Object} options
  * @api public
  */
 
-function tip(el) {
+function tip(el, options) {
+  options = options || {};
   o(el).each(function(i, el){
     el = o(el);
     var tip = new Tip(el.attr('title'));
@@ -28,7 +34,7 @@ function tip(el) {
     el.hover(function(){
       tip.show(el);
     }, function(){
-      tip.hide(300);
+      tip.hide(options.delay || 0);
     });
   });
 }
