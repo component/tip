@@ -18,7 +18,7 @@ module.exports = Tip;
  *
  * Options:
  *
- *  - `delay` hide delay in milliseconds []
+ *  - `delay` hide delay in milliseconds [0]
  *
  * @param {Mixed} el
  * @param {Object} options
@@ -27,15 +27,24 @@ module.exports = Tip;
 
 function tip(el, options) {
   options = options || {};
+  var delay = options.delay || 0;
+
   o(el).each(function(i, el){
     el = o(el);
     var tip = new Tip(el.attr('title'));
+
+    // remove title
     el.attr('title', '');
-    el.hover(function(){
-      tip.show(el);
-    }, function(){
-      tip.hide(options.delay || 0);
-    });
+
+    // cancel hide on hover
+    tip.el.hover(
+      tip.cancelHide.bind(tip),
+      tip.hide.bind(tip, delay));
+
+    // show tip on hover
+    el.hover(
+      tip.show.bind(tip, el),
+      tip.hide.bind(tip, delay));
   });
 }
 
@@ -46,8 +55,8 @@ function tip(el, options) {
  * @api public
  */
 
-function Tip(content) {
-  if (!(this instanceof Tip)) return tip(content);
+function Tip(content, options) {
+  if (!(this instanceof Tip)) return tip(content, options);
   Emitter.call(this);
   this.classname = '';
   this._content = content;
@@ -253,6 +262,16 @@ Tip.prototype.offset = function(pos){
 };
 
 /**
+ * Cancel the `.hide()` timeout.
+ *
+ * @api private
+ */
+
+Tip.prototype.cancelHide = function(){
+  clearTimeout(this._hide);
+};
+
+/**
  * Hide the tip with optional `ms` delay.
  *
  * Emits "hide" event.
@@ -267,18 +286,14 @@ Tip.prototype.hide = function(ms){
 
   // duration
   if (ms) {
-    setTimeout(function(){
-      self.hide();
-    }, ms);
+    this._hide = setTimeout(this.hide.bind(this), ms);
     return this;
   }
 
   // hide
   this.el.addClass('tip-hide');
   if (this._effect) {
-    setTimeout(function(){
-      self.remove();
-    }, 300);
+    setTimeout(this.remove.bind(this), 300);
   } else {
     self.remove();
   }
