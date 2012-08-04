@@ -24,6 +24,7 @@ function tip(el) {
   o(el).each(function(i, el){
     el = o(el);
     var tip = new Tip(el.attr('title'));
+    el.attr('title', '');
     el.hover(function(){
       tip.show(el);
     }, function(){
