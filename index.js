@@ -312,6 +312,6 @@ Tip.prototype.remove = function(){
   o(window).unbind('resize', this._reposition);
   o(window).unbind('scroll', this._reposition);
   this.emit('hide');
-  this.el.remove();
+  this.el.detach();
   return this;
 };
