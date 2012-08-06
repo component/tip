@@ -33,13 +33,11 @@ function tip(el, options) {
     el = o(el);
     var tip = new Tip(el.attr('title'));
 
-    // remove title
+    // prevent original title
     el.attr('title', '');
 
     // cancel hide on hover
-    tip.el.hover(
-      tip.cancelHide.bind(tip),
-      tip.hide.bind(tip, delay));
+    tip.cancelHideOnHover(delay);
 
     // show tip on hover
     el.hover(
@@ -71,6 +69,19 @@ function Tip(content, options) {
  */
 
 Tip.prototype.__proto__ = Emitter.prototype;
+
+/**
+ * Cancel hide on hover, hide with the given `delay`.
+ *
+ * @param {Number} delay
+ * @api private
+ */
+
+Tip.prototype.cancelHideOnHover = function(delay){
+  this.el.hover(
+    this.cancelHide.bind(this),
+    this.hide.bind(this, delay));
+};
 
 /**
  * Set the effect to `type`.
