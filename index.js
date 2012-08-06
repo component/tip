@@ -36,9 +36,6 @@ function tip(el, options) {
     // prevent original title
     el.attr('title', '');
 
-    // cancel hide on hover
-    tip.cancelHideOnHover(delay);
-
     // show tip on hover
     el.hover(
       tip.show.bind(tip, el),
@@ -61,6 +58,7 @@ function Tip(content, options) {
   this.el = o(render('tip'));
   this.inner = this.el.find('.tip-inner');
   this.position('north');
+  this.cancelHideOnHover();
   if (Tip.effect) this.effect(Tip.effect);
 }
 
