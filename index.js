@@ -58,7 +58,7 @@ function Tip(content, options) {
   Emitter.call(this);
   this.classname = '';
   this._content = content;
-  this.el = o(render('tip'));
+  this.el = o(require('./template'));
   this.inner = this.el.find('.tip-inner');
   this.position('north');
   if (Tip.effect) this.effect(Tip.effect);

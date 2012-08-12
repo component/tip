@@ -1,8 +1,14 @@
 
-test/out.js: index.js tip.css
-	component build package.json test/out
+build: tip.css index.js template.js components
+	@component build
+
+template.js: template.html
+	@component convert $<
+
+components:
+	@component install
 
 clean:
-	rm -f test/out.{js,css}
+	rm -fr build components
 
 .PHONY: clean

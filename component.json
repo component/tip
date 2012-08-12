@@ -7,7 +7,6 @@
     "component/emitter": "*",
     "component/jquery": "*"
   },
-  "scripts": ["index.js"],
-  "styles": ["tip.css"],
-  "templates": ["tip.html"]
+  "scripts": ["index.js", "template.js"],
+  "styles": ["tip.css"]
 }
