@@ -58,6 +58,7 @@ function Tip(content, options) {
   Emitter.call(this);
   this.classname = '';
   this._content = content;
+  this._parent = null;
   this.el = o(require('./template'));
   this.inner = this.el.find('.tip-inner');
   this.position('north');
@@ -133,16 +134,28 @@ Tip.prototype.show = function(el){
   if (!el) throw new Error('.show() element required');
   this.target = o(el);
   this.inner.empty().append(this._content);
-  this.el.appendTo('body');
+  this.el.appendTo(this._parent || 'body');
   this.el.addClass('tip-' + this._position);
   this.reposition();
   this.el.removeClass('tip-hide');
   this.emit('show', this.target);
   this._reposition = this.reposition.bind(this);
   o(window).bind('resize', this._reposition);
-  o(window).bind('scroll', this._reposition);
+  o(this._parent || window).bind('scroll', this._reposition);
   return this;
 };
+
+/**
+ * Set element's parent element
+ *
+ * @param {jQuery|Element} el 
+ * @return {Tip}
+ * @api public
+ */
+Tip.prototype.parent = function(el){
+  this._parent = o(el);
+  return this;
+}
 
 /**
  * Reposition the tip if necessary.
@@ -175,11 +188,11 @@ Tip.prototype.suggested = function(pos, off){
   var ew = el.outerWidth();
   var eh = el.outerHeight();
 
-  var win = o(window);
-  var top = win.scrollTop();
-  var left = win.scrollLeft();
-  var w = win.width();
-  var h = win.height();
+  var parent = o(this._parent || window);
+  var top = parent.scrollTop();
+  var left = parent.scrollLeft();
+  var w = parent.width();
+  var h = parent.height();
 
   // too high
   if (off.top < top) return 'south';
@@ -218,6 +231,7 @@ Tip.prototype.replaceClass = function(name){
 Tip.prototype.offset = function(pos){
   var el = this.el;
   var target = this.target;
+  var parent = this._parent;
 
   var ew = el.outerWidth();
   var eh = el.outerHeight();
@@ -225,6 +239,12 @@ Tip.prototype.offset = function(pos){
   var to = target.offset();
   var tw = target.outerWidth();
   var th = target.outerHeight();
+
+  if (parent) {
+    var po = parent.offset();
+    to.top = to.top - po.top + parent.scrollTop();
+    to.left = to.left - po.left + parent.scrollLeft();
+  }
 
   switch (pos) {
     case 'north':
@@ -321,7 +341,7 @@ Tip.prototype.hide = function(ms){
 
 Tip.prototype.remove = function(){
   o(window).unbind('resize', this._reposition);
-  o(window).unbind('scroll', this._reposition);
+  o(this._parent || window).unbind('scroll', this._reposition);
   this.emit('hide');
   this.el.detach();
   return this;
