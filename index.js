@@ -137,6 +137,7 @@ Tip.prototype.show = function(el){
   this.el.appendTo(this._parent || 'body');
   this.el.addClass('tip-' + this._position);
   this.reposition();
+  this.reposition();
   this.el.removeClass('tip-hide');
   this.emit('show', this.target);
   this._reposition = this.reposition.bind(this);
