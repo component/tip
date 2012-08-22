@@ -51,9 +51,9 @@ function Tip(content, options) {
   if (!(this instanceof Tip)) return tip(content, options);
   Emitter.call(this);
   this.classname = '';
-  this._content = content;
   this.el = o(require('./template'));
   this.inner = this.el.find('.tip-inner');
+  this.inner.append(content);
   this.position('north');
   if (Tip.effect) this.effect(Tip.effect);
 }
@@ -144,7 +144,6 @@ Tip.prototype.position = function(type){
 Tip.prototype.show = function(el){
   if (!el) throw new Error('.show() element required');
   this.target = o(el);
-  this.inner.empty().append(this._content);
   this.el.appendTo('body');
   this.el.addClass('tip-' + this._position);
   this.reposition();
