@@ -40,9 +40,7 @@ function tip(el, options) {
     tip.cancelHideOnHover(delay);
 
     // show tip on hover
-    el.hover(
-      tip.show.bind(tip, el),
-      tip.hide.bind(tip, delay));
+    tip.attach(el, delay);
   });
 }
 
@@ -69,6 +67,22 @@ function Tip(content, options) {
  */
 
 Tip.prototype.__proto__ = Emitter.prototype;
+
+/**
+ * Attach to the given `el` with optional hide `delay`.
+ *
+ * @param {Element} el
+ * @param {Number} delay
+ * @return {Tip}
+ * @api public
+ */
+
+Tip.prototype.attach = function(el, delay){
+  el.hover(
+    this.show.bind(this, el),
+    this.hide.bind(this, delay || 0));
+  return this;
+};
 
 /**
  * Cancel hide on hover, hide with the given `delay`.
