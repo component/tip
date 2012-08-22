@@ -1,5 +1,5 @@
 
-0.0.2 / 2012-07-05 
+0.0.2 / 2012-08-22 
 ==================
 
-  * fix dialog.effect support
+  * add `Tip#cancelHideOnHover()`
