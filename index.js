@@ -32,14 +32,8 @@ function tip(el, options) {
   o(el).each(function(i, el){
     el = o(el);
     var tip = new Tip(el.attr('title'));
-
-    // prevent original title
     el.attr('title', '');
-
-    // cancel hide on hover
     tip.cancelHideOnHover(delay);
-
-    // show tip on hover
     tip.attach(el, delay);
   });
 }
