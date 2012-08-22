@@ -82,13 +82,15 @@ Tip.prototype.attach = function(el, delay){
  * Cancel hide on hover, hide with the given `delay`.
  *
  * @param {Number} delay
- * @api private
+ * @return {Tip}
+ * @api public
  */
 
 Tip.prototype.cancelHideOnHover = function(delay){
   this.el.hover(
     this.cancelHide.bind(this),
-    this.hide.bind(this, delay));
+    this.hide.bind(this, delay || 0));
+  return this;
 };
 
 /**
