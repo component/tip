@@ -19,6 +19,7 @@ module.exports = Tip;
  * Options:
  *
  *  - `delay` hide delay in milliseconds [0]
+ *  - `value` defaulting to the element's title attribute
  *
  * @param {Mixed} el
  * @param {Object} options
@@ -31,7 +32,8 @@ function tip(el, options) {
 
   o(el).each(function(i, el){
     el = o(el);
-    var tip = new Tip(el.attr('title'));
+    var val = options.value || el.attr('title');
+    var tip = new Tip(val);
     el.attr('title', '');
     tip.cancelHideOnHover(delay);
     tip.attach(el, delay);
