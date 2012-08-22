@@ -1,7 +1,7 @@
 {
   "name": "tip",
   "description": "Tip component",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "keywords": ["tooltip", "tip", "ui"],
   "dependencies": {
     "component/emitter": "*",
