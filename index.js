@@ -74,7 +74,7 @@ Tip.prototype.__proto__ = Emitter.prototype;
  */
 
 Tip.prototype.attach = function(el, delay){
-  el.hover(
+  o(el).hover(
     this.show.bind(this, el),
     this.hide.bind(this, delay || 0));
   return this;
