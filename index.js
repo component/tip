@@ -28,7 +28,7 @@ module.exports = Tip;
 
 function tip(el, options) {
   options = options || {};
-  var delay = options.delay || 0;
+  var delay = options.delay;
 
   o(el).each(function(i, el){
     el = o(el);
@@ -74,9 +74,13 @@ Tip.prototype.__proto__ = Emitter.prototype;
  */
 
 Tip.prototype.attach = function(el, delay){
-  o(el).hover(
-    this.show.bind(this, el),
-    this.hide.bind(this, delay || 0));
+  var self = this;
+  o(el).hover(function(){
+    self.show(el);
+    self.cancelHide();
+  }, function(){
+    self.hide(delay);
+  });
   return this;
 };
 
@@ -91,7 +95,7 @@ Tip.prototype.attach = function(el, delay){
 Tip.prototype.cancelHideOnHover = function(delay){
   this.el.hover(
     this.cancelHide.bind(this),
-    this.hide.bind(this, delay || 0));
+    this.hide.bind(this, delay));
   return this;
 };
 
