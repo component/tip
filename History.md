@@ -1,4 +1,9 @@
 
+0.0.5 / 2012-08-31 
+==================
+
+  * fix hiding of tip when hover back over the target
+
 0.0.4 / 2012-08-22 
 ==================
 
