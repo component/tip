@@ -7,6 +7,9 @@
     "component/emitter": "*",
     "component/jquery": "*"
   },
+  "development": {
+    "component/aurora-tip": "*"
+  },
   "scripts": ["index.js", "template.js"],
   "styles": ["tip.css"]
 }
