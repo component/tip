@@ -2,7 +2,11 @@
   "name": "tip",
   "description": "Tip component",
   "version": "0.0.5",
-  "keywords": ["tooltip", "tip", "ui"],
+  "keywords": [
+    "tooltip",
+    "tip",
+    "ui"
+  ],
   "dependencies": {
     "component/emitter": "*",
     "component/jquery": "*"
@@ -10,6 +14,12 @@
   "development": {
     "component/aurora-tip": "*"
   },
-  "scripts": ["index.js", "template.js"],
-  "styles": ["tip.css"]
+  "scripts": [
+    "index.js",
+    "template.js"
+  ],
+  "styles": [
+    "tip.css"
+  ],
+  "license": "MIT"
 }
