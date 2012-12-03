@@ -124,23 +124,36 @@ Tip.prototype.position = function(type){
  *
  * Emits "show" (el) event.
  *
- * @param {jQuery|Element} el
+ * @param {jQuery|Element} el or x
+ * @param {Number} [y]
  * @return {Tip}
  * @api public
  */
 
 Tip.prototype.show = function(el){
-  if (!el) throw new Error('.show() element required');
-  this.target = o(el);
+  // show it
   this.inner.empty().append(this._content);
   this.el.appendTo('body');
   this.el.addClass('tip-' + this._position);
-  this.reposition();
   this.el.removeClass('tip-hide');
+
+  // x,y
+  if ('number' == typeof el) {
+    var x = arguments[0];
+    var y = arguments[1];
+    this.emit('show');
+    this.el.css({ top: y, left: x });
+    return this;
+  }
+
+  // el
+  this.target = o(el);
+  this.reposition();
   this.emit('show', this.target);
   this._reposition = this.reposition.bind(this);
   o(window).bind('resize', this._reposition);
   o(window).bind('scroll', this._reposition);
+
   return this;
 };
 

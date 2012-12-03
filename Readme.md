@@ -66,6 +66,10 @@ tip.show('#mylink');
   Show the tip attached to `el`, where `el`
   may be a selector or element.
 
+### Tip#show(x, y)
+
+  Show the tip at the absolute position `(x, y)`.
+
 ### Tip#hide([ms])
 
   Hide the tip immediately or wait `ms`.
