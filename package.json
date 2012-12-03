@@ -1,0 +1,17 @@
+{
+  "name": "tip-component",
+  "description": "Tip component",
+  "version": "0.1.0",
+  "keywords": ["tip", "component"],
+  "dependencies": {
+    "emitter-component": "*",
+    "jquery-component": "*"
+  },
+  "component": {
+    "styles": ["tip.css"],
+    "scripts": {
+      "tip/index.js": "index.js",
+      "tip/template.js": "template.js"
+    }
+  }
+}

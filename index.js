@@ -19,6 +19,7 @@ module.exports = Tip;
  * Options:
  *
  *  - `delay` hide delay in milliseconds [0]
+ *  - `value` defaulting to the element's title attribute
  *
  * @param {Mixed} el
  * @param {Object} options
@@ -27,22 +28,15 @@ module.exports = Tip;
 
 function tip(el, options) {
   options = options || {};
-  var delay = options.delay || 0;
+  var delay = options.delay;
 
   o(el).each(function(i, el){
     el = o(el);
-    var tip = new Tip(el.attr('title'));
-
-    // prevent original title
+    var val = options.value || el.attr('title');
+    var tip = new Tip(val);
     el.attr('title', '');
-
-    // cancel hide on hover
     tip.cancelHideOnHover(delay);
-
-    // show tip on hover
-    el.hover(
-      tip.show.bind(tip, el),
-      tip.hide.bind(tip, delay));
+    tip.attach(el, delay);
   });
 }
 
@@ -57,9 +51,9 @@ function Tip(content, options) {
   if (!(this instanceof Tip)) return tip(content, options);
   Emitter.call(this);
   this.classname = '';
-  this._content = content;
   this.el = o(require('./template'));
   this.inner = this.el.find('.tip-inner');
+  this.inner.append(content);
   this.position('north');
   if (Tip.effect) this.effect(Tip.effect);
 }
@@ -71,16 +65,38 @@ function Tip(content, options) {
 Tip.prototype.__proto__ = Emitter.prototype;
 
 /**
+ * Attach to the given `el` with optional hide `delay`.
+ *
+ * @param {Element} el
+ * @param {Number} delay
+ * @return {Tip}
+ * @api public
+ */
+
+Tip.prototype.attach = function(el, delay){
+  var self = this;
+  o(el).hover(function(){
+    self.show(el);
+    self.cancelHide();
+  }, function(){
+    self.hide(delay);
+  });
+  return this;
+};
+
+/**
  * Cancel hide on hover, hide with the given `delay`.
  *
  * @param {Number} delay
- * @api private
+ * @return {Tip}
+ * @api public
  */
 
 Tip.prototype.cancelHideOnHover = function(delay){
   this.el.hover(
     this.cancelHide.bind(this),
     this.hide.bind(this, delay));
+  return this;
 };
 
 /**
@@ -132,7 +148,7 @@ Tip.prototype.position = function(type){
 
 Tip.prototype.show = function(el){
   // show it
-  this.inner.empty().append(this._content);
+  this.target = o(el);
   this.el.appendTo('body');
   this.el.addClass('tip-' + this._position);
   this.el.removeClass('tip-hide');

@@ -78,6 +78,10 @@ tip.show('#mylink');
 
   Use effect `name`. Default with `Tip.effect = 'fade'` for example.
 
+### Themes
+
+  - [Aurora](https://github.com/component/aurora-tip)
+
 ## License
 
   MIT
