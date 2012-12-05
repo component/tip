@@ -1,4 +1,3 @@
-
 /**
  * Module dependencies.
  */
@@ -166,9 +165,11 @@ Tip.prototype.show = function(el){
   this.target = o(el);
   this.reposition();
   this.emit('show', this.target);
-  this._reposition = this.reposition.bind(this);
-  o(window).bind('resize', this._reposition);
-  o(window).bind('scroll', this._reposition);
+  if (this.reposition.bind) {
+    this._reposition = this.reposition.bind(this);
+    o(window).bind('resize', this._reposition);
+    o(window).bind('scroll', this._reposition);  
+  }
 
   return this;
 };
