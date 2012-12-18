@@ -114,7 +114,7 @@ Tip.prototype.effect = function(type){
 };
 
 /**
- * Set position `type`:
+ * Set position:
  *
  *  - `north`
  *  - `north east`
@@ -125,13 +125,14 @@ Tip.prototype.effect = function(type){
  *  - `east`
  *  - `west`
  *
- * @param {String} type
+ * @param {String} pos
  * @return {Tip}
  * @api public
  */
 
-Tip.prototype.position = function(type){
-  this._position = type;
+Tip.prototype.position = function(pos){
+  this._position = pos;
+  this.replaceClass(pos);
   return this;
 };
 
