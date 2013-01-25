@@ -81,6 +81,7 @@ tip.show('#mylink');
 ### Themes
 
   - [Aurora](https://github.com/component/aurora-tip)
+  - [Nightrider](https://github.com/jb55/nightrider-tip)
 
 ## License
 
