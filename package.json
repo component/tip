@@ -1,9 +1,10 @@
 {
   "name": "tip-component",
   "description": "Tip component",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "keywords": ["tip", "component"],
   "dependencies": {
+    "inherit-component": "*",
     "emitter-component": "*",
     "jquery-component": "*"
   },
