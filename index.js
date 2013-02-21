@@ -4,6 +4,7 @@
  */
 
 var Emitter = require('emitter')
+  , inherit = require('inherit')
   , o = require('jquery');
 
 /**
@@ -62,7 +63,7 @@ function Tip(content, options) {
  * Inherits from `Emitter.prototype`.
  */
 
-Tip.prototype.__proto__ = Emitter.prototype;
+inherit(Tip, Emitter);
 
 /**
  * Attach to the given `el` with optional hide `delay`.

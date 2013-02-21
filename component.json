@@ -9,6 +9,7 @@
   ],
   "dependencies": {
     "component/emitter": "*",
+    "component/inherit": "*",
     "component/jquery": "*"
   },
   "development": {
