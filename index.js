@@ -23,11 +23,12 @@ module.exports = Tip;
  *  - `value` defaulting to the element's title attribute
  *
  * @param {Mixed} el
- * @param {Object} options
+ * @param {Object|String} options or value
  * @api public
  */
 
 function tip(el, options) {
+  if ('string' == typeof options) options = { value : options };
   options = options || {};
   var delay = options.delay;
 
