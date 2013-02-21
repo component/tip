@@ -53,6 +53,7 @@
       <a href="#" title="I'm using a title attr">Hover</a>
       <a href="#" title="I'm another link">Hover</a>
       <a href="#" id="hover-value">Hover Value</a>
+      <a href="#" id="terse-hover-value">Terse Hover Value</a>
     </div>
     <script>
       var o = require('component-jquery');
@@ -93,6 +94,8 @@
       absolute.show(25, 25).position('west');
 
       Tip('#hover-value', { delay: 1000, value: 'Hello' });
+
+      Tip('#terse-hover-value', 'Hi');
     </script>
   </body>
 </html>
