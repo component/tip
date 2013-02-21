@@ -28,6 +28,10 @@ $ npm install tip-component
 
 ## API
 
+### Tip(el, string)
+
+  Equivalent to `Tip(el, { value: string })`.
+
 ### Tip(el, [options])
 
   Attach a `Tip` to an element, and display the `title`
@@ -49,7 +53,7 @@ var Tip = require('tip');
 var tip = new Tip('Hello!');
 tip.show('#mylink');
 ```
-  
+
 ### Tip#position(type)
 
   - `north`
