@@ -55,7 +55,7 @@ function Tip(content, options) {
   this.classname = '';
   this.el = o(require('./template'));
   this.inner = this.el.find('.tip-inner');
-  this.content(content);
+  this.message(content);
   this.position('north');
   if (Tip.effect) this.effect(Tip.effect);
 }
@@ -74,7 +74,7 @@ inherit(Tip, Emitter);
  * @api public
  */
 
-Tip.prototype.content = function(content){
+Tip.prototype.message = function(content){
   this.inner.empty().append(content);
   return this;
 };
