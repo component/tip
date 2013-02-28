@@ -1,4 +1,9 @@
 
+0.1.4 / 2013-02-28 
+==================
+
+  * rename .content() to .message() for inheritance bullshit
+
 0.1.3 / 2013-02-28 
 ==================
 

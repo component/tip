@@ -1,7 +1,7 @@
 {
   "name": "tip-component",
   "description": "Tip component",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "keywords": ["tip", "component"],
   "dependencies": {
     "inherit-component": "*",
