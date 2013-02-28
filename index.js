@@ -55,7 +55,7 @@ function Tip(content, options) {
   this.classname = '';
   this.el = o(require('./template'));
   this.inner = this.el.find('.tip-inner');
-  this.inner.append(content);
+  this.content(content);
   this.position('north');
   if (Tip.effect) this.effect(Tip.effect);
 }
@@ -65,6 +65,19 @@ function Tip(content, options) {
  */
 
 inherit(Tip, Emitter);
+
+/**
+ * Set tip `content`.
+ *
+ * @param {String|jQuery|Element} content
+ * @return {Tip} self
+ * @api public
+ */
+
+Tip.prototype.content = function(content){
+  this.inner.empty().append(content);
+  return this;
+};
 
 /**
  * Attach to the given `el` with optional hide `delay`.
@@ -214,16 +227,16 @@ Tip.prototype.suggested = function(pos, off){
   var h = win.height();
 
   // too high
-  if (off.top < top) return 'south';
+  if (off.top < top) return 'north';
 
   // too low
-  if (off.top + eh > top + h) return 'north';
+  if (off.top + eh > top + h) return 'south';
 
   // too far to the right
-  if (off.left + ew > left + w) return 'west';
+  if (off.left + ew > left + w) return 'east';
 
   // too far to the left
-  if (off.left < left) return 'east';
+  if (off.left < left) return 'west';
 };
 
 /**
@@ -248,6 +261,7 @@ Tip.prototype.replaceClass = function(name){
  */
 
 Tip.prototype.offset = function(pos){
+  var pad = 15;
   var el = this.el;
   var target = this.target;
 
@@ -259,42 +273,42 @@ Tip.prototype.offset = function(pos){
   var th = target.outerHeight();
 
   switch (pos) {
-    case 'north':
+    case 'south':
       return {
         top: to.top - eh,
         left: to.left + tw / 2 - ew / 2
       }
     case 'north west':
       return {
-        top: to.top,
-        left: to.left - ew
+        top: to.top + th,
+        left: to.left + tw / 2 - pad
       }
     case 'north east':
       return {
-        top: to.top,
-        left: to.left + tw
+        top: to.top + th,
+        left: to.left + tw / 2 - ew + pad
       }
-    case 'south':
+    case 'north':
       return {
         top: to.top + th,
         left: to.left + tw / 2 - ew / 2
       }
     case 'south west':
       return {
-        top: to.top + th - eh * .85,
-        left: to.left - ew
+        top: to.top - eh,
+        left: to.left + tw / 2 - pad
       }
     case 'south east':
       return {
-        top: to.top + th - eh * .85,
-        left: to.left + tw
+        top: to.top - eh,
+        left: to.left + tw / 2 - ew + pad
       }
-    case 'east':
+    case 'west':
       return {
         top: to.top + th / 2 - eh / 2,
         left: to.left + tw
       }
-    case 'west':
+    case 'east':
       return {
         top: to.top + th / 2 - eh / 2,
         left: to.left - ew

@@ -1,4 +1,4 @@
-<!DOCTYPE 5>
+<!DOCTYPE html>
 <html>
   <head>
     <title>Tip</title>
@@ -17,20 +17,27 @@
         padding: 10px;
         color: black;
         text-decoration: none;
-        margin: 55px;
-        width: 100px;
-        height: 100px;
-        line-height: 100px;
+        margin: 80px 15px;
+        width: 180px;
+        height: 30px;
+        line-height: 30px;
         text-align: center;
+        position: relative;
+      }
+      a::after {
+        display: block;
+        content: '.';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        color: #ddd;
       }
       #links {
         min-width: 800px;
       }
-      .tip-south-west .tip-inner,
-      .tip-south-east .tip-inner,
-      .tip-north-west .tip-inner,
-      .tip-north-east .tip-inner {
-        padding-bottom: 50px;
+      #big {
+        margin: 80px;
+        width: 80%;
       }
     </style>
   </head>
@@ -54,6 +61,7 @@
       <a href="#" title="I'm another link">Hover</a>
       <a href="#" id="hover-value">Hover Value</a>
       <a href="#" id="terse-hover-value">Terse Hover Value</a>
+      <a href="#" id="big">Big</a>
     </div>
     <script>
       var o = require('component-jquery');
@@ -96,6 +104,10 @@
       Tip('#hover-value', { delay: 1000, value: 'Hello' });
 
       Tip('#terse-hover-value', 'Hi');
+
+      var tip = new Tip('Just a bigger tip example');
+      tip.show('#big');
+      tip.position('south east')
     </script>
   </body>
 </html>
