@@ -1,4 +1,9 @@
 
+0.2.0 / 2013-03-25 
+==================
+
+  * add .position() .auto option to completely disable auto positioning
+
 0.1.5 / 2013-03-05 
 ==================
 
