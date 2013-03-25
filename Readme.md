@@ -54,7 +54,7 @@ var tip = new Tip('Hello!');
 tip.show('#mylink');
 ```
 
-### Tip#position(type)
+### Tip#position(type, [options])
 
   - `north`
   - `north east`
@@ -64,6 +64,10 @@ tip.show('#mylink');
   - `south west`
   - `east`
   - `west`
+
+Options:
+
+  - `auto` set to __false__ to disable auto-positioning
 
 ### Tip#show(el)
 

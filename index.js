@@ -141,12 +141,15 @@ Tip.prototype.effect = function(type){
  *  - `west`
  *
  * @param {String} pos
+ * @param {Object} options
  * @return {Tip}
  * @api public
  */
 
-Tip.prototype.position = function(pos){
+Tip.prototype.position = function(pos, options){
+  options = options || {};
   this._position = pos;
+  this._auto = false != options.auto;
   this.replaceClass(pos);
   return this;
 };
@@ -198,7 +201,7 @@ Tip.prototype.show = function(el){
 Tip.prototype.reposition = function(){
   var pos = this._position;
   var off = this.offset(pos);
-  var newpos = this.suggested(pos, off);
+  var newpos = this._auto && this.suggested(pos, off);
   if (newpos) off = this.offset(pos = newpos);
   this.replaceClass(pos);
   this.el.css(off);
