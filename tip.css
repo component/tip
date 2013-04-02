@@ -1,5 +1,7 @@
 .tip {
   position: absolute;
+  top: 0;
+  left: 0;
   padding: 5px;
   z-index: 1000;
 }
