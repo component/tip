@@ -1,9 +1,10 @@
 .tip {
   position: absolute;
-  top: 0;
-  left: 0;
   padding: 5px;
   z-index: 1000;
+  /* default offset for edge-cases: https://github.com/component/tip/pull/12 */
+  top: 0;
+  left: 0;
 }
 
 /* effects */
