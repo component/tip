@@ -56,7 +56,7 @@ function Tip(content, options) {
   this.el = o(require('./template'));
   this.inner = this.el.find('.tip-inner');
   Tip.prototype.message.call(this, content);
-  this.position('north');
+  this.position('south');
   if (Tip.effect) this.effect(Tip.effect);
 }
 
