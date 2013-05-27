@@ -1,4 +1,12 @@
 
+0.2.1 / 2013-05-27 
+==================
+
+ * pin deps
+ * change default position back to above the element
+ * remove silly inherit dep
+ * fix for offset bug on 100% pages
+
 0.2.0 / 2013-03-25 
 ==================
 
