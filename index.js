@@ -11,7 +11,8 @@ var Emitter = require('emitter')
   , classes = require('classes')
   , css = require('css')
   , events = require('event')
-  , bind = require('bind');
+  , bind = require('bind')
+  , isArray = require('isArray');
 
 /**
  * Expose `Tip`.
@@ -39,6 +40,7 @@ function tip(el, options) {
   var delay = options.delay;
 
   if ('string' == typeof el) el = query.all(el);
+  if (!isArray(el) && !(el instanceof NodeList)) el = [el];
 
   each(el, function(el, i){
     var val = options.value || el.getAttribute('title');

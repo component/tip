@@ -16,7 +16,8 @@
     "component/event": "*",
     "component/bind": "*",
     "component/classes": "*",
-    "component/css": "*"
+    "component/css": "*",
+    "yields/isArray": "*"
   },
   "development": {
     "component/aurora-tip": "*"
