@@ -181,9 +181,9 @@ Tip.prototype.position = function(pos, options){
 Tip.prototype.show = function(el){
   // show it
   try {
-    this.target = query(el)
+    this.target = query(el);
   } catch (_) { try {
-    this.target = domify(el)[0]
+    this.target = domify(el)[0];
   } catch (_) {
     this.target = el.hover
       ? el[0]
