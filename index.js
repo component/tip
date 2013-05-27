@@ -3,9 +3,8 @@
  * Module dependencies.
  */
 
-var Emitter = require('emitter')
-  , inherit = require('inherit')
-  , o = require('jquery');
+var Emitter = require('emitter');
+var o = require('jquery');
 
 /**
  * Expose `Tip`.
@@ -61,10 +60,10 @@ function Tip(content, options) {
 }
 
 /**
- * Inherits from `Emitter.prototype`.
+ * Mixin emitter.
  */
 
-inherit(Tip, Emitter);
+Emitter(Tip.prototype);
 
 /**
  * Set tip `content`.

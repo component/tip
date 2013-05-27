@@ -4,7 +4,6 @@
   "version": "0.2.0",
   "keywords": ["tip", "component"],
   "dependencies": {
-    "inherit-component": "*",
     "emitter-component": "*",
     "jquery-component": "*"
   },
