@@ -66,6 +66,7 @@
     <script>
       var o = require('component-jquery');
       var Tip = require('tip');
+      
       o('#north,#east,#west,#south,#north-west,#north-east,#south-west,#south-east').each(function(i, el){
         var tip = new Tip(el.textContent);
         tip.position(el.textContent.toLowerCase().split('-').join(' '));
