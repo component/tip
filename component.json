@@ -10,7 +10,13 @@
   "dependencies": {
     "component/emitter": "*",
     "component/inherit": "*",
-    "component/jquery": "*"
+    "component/query": "*",
+    "component/each": "*",
+    "component/domify": "*",
+    "component/event": "*",
+    "component/bind": "*",
+    "component/classes": "*",
+    "component/css": "*"
   },
   "development": {
     "component/aurora-tip": "*"

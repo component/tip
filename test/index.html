@@ -64,28 +64,40 @@
       <a href="#" id="big">Big</a>
     </div>
     <script>
-      var o = require('component-jquery');
+      var each = require('component-each');
+      var events = require('component-event');
       var Tip = require('tip');
-      o('#north,#east,#west,#south,#north-west,#north-east,#south-west,#south-east').each(function(i, el){
+
+      var ids = [
+        '#north', '#east', '#west', '#south', '#north-west', '#north-east',
+        '#south-west', '#south-east'
+      ];
+
+      each(ids, function(id){
+        var el = document.querySelector(id);
         var tip = new Tip(el.textContent);
         tip.position(el.textContent.toLowerCase().split('-').join(' '));
-        o(el).hover(function(){
+        events.bind(el, 'mouseover', function(){
           tip.show(el);
-        }, function(){
+        });
+        events.bind(el, 'mouseout', function(){
           tip.hide(200);
-        })
-      })
+        });
+      });
 
       var maru = new Tip('<img src="http://www.lifelounge.com.au/resources/IMGRELATED/maru-magic-show-catbag-youtube-cat-adventure.jpg" width="200" height="100" />');
       maru.show('#maru');
 
       var tip = new Tip('<input type="search" placeholder="Search" />');
       tip.position('south');
-      o('#markup').hover(function(){
-        tip.show(o('#markup'));
-      }, function(){
+      
+      var markup = document.querySelector('#markup');
+      events.bind(markup, 'mouseover', function(){
+        tip.show('#markup');
+      });
+      events.bind(markup, 'mouseout', function(){
         tip.hide(200);
-      })
+      });
 
       var auto = new Tip('Some tip contents');
       auto.position('north');
