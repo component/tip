@@ -10,7 +10,6 @@
   "dependencies": {
     "component/emitter": "*",
     "component/inherit": "*",
-    "component/jquery": "*",
     "component/query": "*",
     "component/each": "*",
     "component/domify": "*",
