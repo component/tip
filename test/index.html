@@ -82,7 +82,7 @@
       var tip = new Tip('<input type="search" placeholder="Search" />');
       tip.position('south');
       o('#markup').hover(function(){
-        tip.show(o('#markup'));
+        tip.show('#markup');
       }, function(){
         tip.hide(200);
       })
