@@ -10,7 +10,7 @@ var domify = require('domify');
 var classes = require('classes');
 var css = require('css');
 var html = domify(require('./template'));
-var o = require('jquery');
+var offset = require('offset');
 
 /**
  * Expose `Tip`.
@@ -36,10 +36,10 @@ function tip(elem, options) {
   if ('string' == typeof options) options = { value : options };
   options = options || {};
   var delay = options.delay || 300;
-  var els = query.all(elem);
+
+  var els = ('string' == typeof elem) ? query.all(elem) : [elem];
 
   for(var i = 0, el; el = els[i]; i++) {
-    el = ('string' == typeof el) ? query(el) : el;
     var val = options.value || el.getAttribute('title');
     var tip = new Tip(val);
     el.setAttribute('title', '');
@@ -102,6 +102,7 @@ Tip.prototype.message = function(content){
 
 Tip.prototype.attach = function(el, delay){
   var self = this;
+  this.target = el;
   this.handleEvents = events(el, this);
   this.handleEvents.bind('mouseover');
   this.handleEvents.bind('mouseout');
@@ -117,7 +118,7 @@ Tip.prototype.attach = function(el, delay){
  */
 
 Tip.prototype.onmouseover = function() {
-  this.show(this.el);
+  this.show(this.target);
   this.cancelHide();
 };
 
@@ -201,6 +202,12 @@ Tip.prototype.position = function(pos, options){
 Tip.prototype.show = function(el){
   if ('string' == typeof el) el = query(el);
 
+  // show it
+  this.target = el;
+  document.body.appendChild(this.el);
+  this.classes.add('tip-' + this._position.replace(/\s+/g, '-'));
+  this.classes.remove('tip-hide');
+
   // x,y
   if ('number' == typeof el) {
     var x = arguments[0];
@@ -213,14 +220,7 @@ Tip.prototype.show = function(el){
     return this;
   }
 
-  // show it
-  this.target = el;
-  document.body.appendChild(this.el);
-  this.classes.add('tip-' + this._position.replace(/\s+/g, '-'));
-  this.classes.remove('tip-hide');
-
   // el
-  this.target = el;
   this.reposition();
   this.emit('show', this.target);
 
@@ -265,10 +265,6 @@ Tip.prototype.suggested = function(pos, off){
   var w = window.innerWidth;
   var h = window.innerHeight;
 
-  if('north' === this.target.id) {
-    console.log(off.top, eh, top, h);
-  }
-
   // too high
   if (off.top < top) return 'north';
 
@@ -311,7 +307,7 @@ Tip.prototype.offset = function(pos){
   var ew = el.clientWidth;
   var eh = el.clientHeight;
 
-  var to = target.getBoundingClientRect();
+  var to = offset(target);
   var tw = target.clientWidth;
   var th = target.clientHeight;
 
