@@ -34,17 +34,12 @@ module.exports = Tip;
 
 function tip(elem, options) {
   if ('string' == typeof options) options = { value : options };
-  options = options || {};
-  var delay = options.delay || 300;
-
   var els = ('string' == typeof elem) ? query.all(elem) : [elem];
-
   for(var i = 0, el; el = els[i]; i++) {
     var val = options.value || el.getAttribute('title');
     var tip = new Tip(val);
     el.setAttribute('title', '');
-    tip.cancelHideOnHover(delay);
-    tip.attach(el, delay);
+    tip.attach(el);
   }
 }
 
@@ -60,9 +55,10 @@ function Tip(content, options) {
   if (!(this instanceof Tip)) return tip(content, options);
   Emitter.call(this);
   this.classname = '';
-  this.delay = 0;
+  this.delay = options.delay || 300;
   this.el = html.cloneNode(true);
   this.events = events(this.el, this);
+  this.cancelHideOnHover(this.delay);
   this.winEvents = events(window, this);
   this.classes = classes(this.el);
   this.inner = query('.tip-inner', this.el);
@@ -99,7 +95,7 @@ Tip.prototype.message = function(content){
  * @api public
  */
 
-Tip.prototype.attach = function(el, delay){
+Tip.prototype.attach = function(el){
   var self = this;
   this.target = el;
   this.handleEvents = events(el, this);
