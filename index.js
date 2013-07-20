@@ -58,7 +58,6 @@ function tip(elem, options) {
 function Tip(content, options) {
   options = options || {};
   if (!(this instanceof Tip)) return tip(content, options);
-
   Emitter.call(this);
   this.classname = '';
   this.delay = 0;
@@ -67,7 +66,7 @@ function Tip(content, options) {
   this.winEvents = events(window, this);
   this.classes = classes(this.el);
   this.inner = query('.tip-inner', this.el);
-  Tip.prototype.message.call(this, content);
+  this.message(content);
   this.position('south');
   if (Tip.effect) this.effect(Tip.effect);
 }
@@ -407,7 +406,6 @@ Tip.prototype.hide = function(ms){
 Tip.prototype.remove = function(){
   this.winEvents.unbind('resize', 'reposition');
   this.winEvents.unbind('scroll', 'reposition');
-
   this.emit('hide');
 
   var parent = this.el.parentNode;
