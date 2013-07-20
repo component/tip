@@ -39,6 +39,7 @@ function tip(elem, options) {
     var val = options.value || el.getAttribute('title');
     var tip = new Tip(val);
     el.setAttribute('title', '');
+    tip.cancelHideOnHover();
     tip.attach(el);
   }
 }
@@ -58,7 +59,6 @@ function Tip(content, options) {
   this.delay = options.delay || 300;
   this.el = html.cloneNode(true);
   this.events = events(this.el, this);
-  this.cancelHideOnHover(this.delay);
   this.winEvents = events(window, this);
   this.classes = classes(this.el);
   this.inner = query('.tip-inner', this.el);
@@ -137,7 +137,7 @@ Tip.prototype.onmouseout = function() {
  * @api public
  */
 
-Tip.prototype.cancelHideOnHover = function(delay){
+Tip.prototype.cancelHideOnHover = function(){
   this.events.bind('mouseover', 'cancelHide');
   this.events.bind('mouseout', 'hide');
   return this;
