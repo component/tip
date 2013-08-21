@@ -2,16 +2,25 @@
   "name": "tip-component",
   "description": "Tip component",
   "version": "0.2.1",
-  "keywords": ["tip", "component"],
+  "keywords": [
+    "tip",
+    "component"
+  ],
   "dependencies": {
     "emitter-component": "1.0.0",
     "jquery-component": "*"
   },
   "component": {
-    "styles": ["tip.css"],
+    "styles": [
+      "tip.css"
+    ],
     "scripts": {
       "tip/index.js": "index.js",
       "tip/template.js": "template.js"
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/component/tip.git"
   }
 }
