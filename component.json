@@ -9,10 +9,16 @@
   ],
   "dependencies": {
     "component/emitter": "1.0.0",
-    "component/jquery": "*"
+    "component/query": "0.0.1",
+    "component/events": "1.0.3",
+    "component/domify": "1.0.0",
+    "component/classes": "1.1.2",
+    "component/css": "*",
+    "timoxley/offset": "0.0.2"
   },
   "development": {
-    "component/aurora-tip": "*"
+    "component/aurora-tip": "*",
+    "component/jquery": "*"
   },
   "scripts": [
     "index.js",

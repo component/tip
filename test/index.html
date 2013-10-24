@@ -82,7 +82,7 @@
       var tip = new Tip('<input type="search" placeholder="Search" />');
       tip.position('south');
       o('#markup').hover(function(){
-        tip.show(o('#markup'));
+        tip.show('#markup');
       }, function(){
         tip.hide(200);
       })
@@ -105,9 +105,9 @@
 
       Tip('#terse-hover-value', 'Hi');
 
-      var tip = new Tip('Just a bigger tip example');
-      tip.show('#big');
-      tip.position('south east')
+      var big = new Tip('Just a bigger tip example');
+      big.show('#big');
+      big.position('south east');
     </script>
   </body>
 </html>
