@@ -11,6 +11,7 @@ var classes = require('classes');
 var css = require('css');
 var html = domify(require('./template'));
 var offset = require('offset');
+var rndid = require('rndid');
 
 /**
  * Expose `Tip`.
@@ -58,6 +59,7 @@ function Tip(content, options) {
   this.classname = '';
   this.delay = options.delay || 300;
   this.el = html.cloneNode(true);
+  this.el.id = rndid();
   this.events = events(this.el, this);
   this.winEvents = events(window, this);
   this.classes = classes(this.el);
@@ -196,6 +198,9 @@ Tip.prototype.position = function(pos, options){
 
 Tip.prototype.show = function(el){
   if ('string' == typeof el) el = query(el);
+  if ('object' == typeof el && el.nodeType) {
+    el.setAttribute('aria-describedby', this.el.id);
+  }
 
   // show it
   this.target = el;
