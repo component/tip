@@ -212,6 +212,7 @@ Tip.prototype.show = function(el){
       top: y,
       left: x
     });
+    this.reposition = false;
     return this;
   }
 
@@ -400,8 +401,10 @@ Tip.prototype.hide = function(ms){
  */
 
 Tip.prototype.remove = function(){
-  this.winEvents.unbind('resize', 'reposition');
-  this.winEvents.unbind('scroll', 'reposition');
+  if(this.reposition) {
+    this.winEvents.unbind('resize', 'reposition');
+    this.winEvents.unbind('scroll', 'reposition');
+  }
   this.emit('hide');
 
   var parent = this.el.parentNode;
