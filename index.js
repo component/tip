@@ -282,7 +282,12 @@ Tip.prototype.suggested = function(pos, off){
 
 Tip.prototype.replaceClass = function(name){
   name = name.split(' ').join('-');
-  this.el.setAttribute('class', this.classname + ' tip tip-' + name + ' ' + this._effect);
+  var cssname = this.classname + ' tip tip-' + name;
+  if (this._effect) {
+    cssname += ' ' + this._effect;
+  }
+
+  this.el.setAttribute('class', cssname);
 };
 
 /**
