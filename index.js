@@ -237,6 +237,7 @@ Tip.prototype.reposition = function(){
   var newpos = this._auto && this.suggested(pos, off);
   if (newpos) off = this.offset(pos = newpos);
   this.replaceClass(pos);
+  this.emit('reposition');
   css(this.el, off);
 };
 
