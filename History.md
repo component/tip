@@ -1,4 +1,12 @@
 
+0.3.1 / 2014-01-02 
+==================
+
+  * ocd
+  * emit `reposition` event
+  * fix setting `undefined` css classname
+  * update emitter
+
 0.3.0 / 2013-10-24 
 ==================
 
