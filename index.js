@@ -180,6 +180,7 @@ Tip.prototype.position = function(pos, options){
   this._position = pos;
   this._auto = false != options.auto;
   this.replaceClass(pos);
+  this.emit('reposition');
   return this;
 };
 
