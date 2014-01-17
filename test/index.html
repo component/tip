@@ -45,17 +45,17 @@
     <title>Tip</title>
     <script src="../build/build.js"></script>
     <div id="links">
-      <a href="#" id="north">North</a>
-      <a href="#" id="east">East</a>
-      <a href="#" id="west">West</a>
-      <a href="#" id="south">South</a>
-      <a href="#" id="north-west">North West</a>
-      <a href="#" id="north-east">North East</a>
-      <a href="#" id="south-west">South West</a>
-      <a href="#" id="south-east">South East</a>
+      <a href="#" id="top">Top</a>
+      <a href="#" id="bottom">Bottom</a>
+      <a href="#" id="left">Left</a>
+      <a href="#" id="right">Right</a>
+      <a href="#" id="top-left">Top Left</a>
+      <a href="#" id="top-right">Top Right</a>
+      <a href="#" id="bottom-left">Bottom Left</a>
+      <a href="#" id="bottom-right">Bottom Right</a>
       <a href="#" id="markup">Markup</a>
-      <a href="#" id="auto-north">Auto</a>
-      <a href="#" id="auto-south">Auto</a>
+      <a href="#" id="auto-top">Auto</a>
+      <a href="#" id="auto-bottom">Auto</a>
       <a href="#" id="maru">Maru</a>
       <a href="#" title="I'm using a title attr">Hover</a>
       <a href="#" title="I'm another link">Hover</a>
@@ -66,7 +66,7 @@
     <script>
       var o = require('component-jquery');
       var Tip = require('tip');
-      o('#north,#east,#west,#south,#north-west,#north-east,#south-west,#south-east').each(function(i, el){
+      o('#bottom,#left,#right,#top,#bottom-right,#bottom-left,#top-right,#top-left').each(function(i, el){
         var tip = new Tip(el.textContent);
         tip.position(el.textContent.toLowerCase().split('-').join(' '));
         o(el).hover(function(){
@@ -80,7 +80,7 @@
       maru.show('#maru');
 
       var tip = new Tip('<input type="search" placeholder="Search" />');
-      tip.position('south');
+      tip.position('top');
       o('#markup').hover(function(){
         tip.show('#markup');
       }, function(){
@@ -88,18 +88,18 @@
       })
 
       var auto = new Tip('Some tip contents');
-      auto.position('north');
-      auto.show('#auto-north');
+      auto.position('bottom');
+      auto.show('#auto-bottom');
 
       var auto = new Tip('Some tip contents');
-      auto.position('south');
-      auto.show('#auto-south');
+      auto.position('top');
+      auto.show('#auto-top');
 
 
       Tip('a[title]', { delay: 1000 });
 
       var absolute = new Tip('(25, 25)');
-      absolute.show(25, 25).position('west');
+      absolute.show(25, 25).position('right');
 
       Tip('#hover-value', { delay: 1000, value: 'Hello' });
 
@@ -107,7 +107,7 @@
 
       var big = new Tip('Just a bigger tip example');
       big.show('#big');
-      big.position('south east');
+      big.position('top left');
     </script>
   </body>
 </html>

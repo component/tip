@@ -63,7 +63,7 @@ function Tip(content, options) {
   this.classes = classes(this.el);
   this.inner = query('.tip-inner', this.el);
   this.message(content);
-  this.position('south');
+  this.position('top');
   if (Tip.effect) this.effect(Tip.effect);
 }
 
@@ -160,14 +160,14 @@ Tip.prototype.effect = function(type){
 /**
  * Set position:
  *
- *  - `north`
- *  - `north east`
- *  - `north west`
- *  - `south`
- *  - `south east`
- *  - `south west`
- *  - `east`
- *  - `west`
+ *  - `top`
+ *  - `top left`
+ *  - `top right`
+ *  - `bottom`
+ *  - `bottom left`
+ *  - `bottom right`
+ *  - `left`
+ *  - `right`
  *
  * @param {String} pos
  * @param {Object} options
@@ -262,17 +262,17 @@ Tip.prototype.suggested = function(pos, off){
   var w = window.innerWidth;
   var h = window.innerHeight;
 
-  // too high
-  if (off.top < top) return 'north';
-
   // too low
-  if (off.top + eh > top + h) return 'south';
+  if (off.top + eh > top + h) return 'top';
+
+  // too high
+  if (off.top < top) return 'bottom';
 
   // too far to the right
-  if (off.left + ew > left + w) return 'east';
+  if (off.left + ew > left + w) return 'left';
 
   // too far to the left
-  if (off.left < left) return 'west';
+  if (off.left < left) return 'right';
 };
 
 /**
@@ -311,45 +311,45 @@ Tip.prototype.offset = function(pos){
   var th = target.clientHeight;
 
   switch (pos) {
-    case 'south':
+    case 'top':
       return {
         top: to.top - eh,
         left: to.left + tw / 2 - ew / 2
       }
-    case 'north west':
-      return {
-        top: to.top + th,
-        left: to.left + tw / 2 - pad
-      }
-    case 'north east':
-      return {
-        top: to.top + th,
-        left: to.left + tw / 2 - ew + pad
-      }
-    case 'north':
+    case 'bottom':
       return {
         top: to.top + th,
         left: to.left + tw / 2 - ew / 2
       }
-    case 'south west':
-      return {
-        top: to.top - eh,
-        left: to.left + tw / 2 - pad
-      }
-    case 'south east':
-      return {
-        top: to.top - eh,
-        left: to.left + tw / 2 - ew + pad
-      }
-    case 'west':
+    case 'right':
       return {
         top: to.top + th / 2 - eh / 2,
         left: to.left + tw
       }
-    case 'east':
+    case 'left':
       return {
         top: to.top + th / 2 - eh / 2,
         left: to.left - ew
+      }
+    case 'top left':
+      return {
+        top: to.top - eh,
+        left: to.left + tw / 2 - ew + pad
+      }
+    case 'top right':
+      return {
+        top: to.top - eh,
+        left: to.left + tw / 2 - pad
+      }
+    case 'bottom left':
+      return {
+        top: to.top + th,
+        left: to.left + tw / 2 - ew + pad
+      }
+    case 'bottom right':
+      return {
+        top: to.top + th,
+        left: to.left + tw / 2 - pad
       }
     default:
       throw new Error('invalid position "' + pos + '"');
