@@ -1,4 +1,3 @@
-
 # Tip
 
   Tip component. Inspired by [tipsy](https://github.com/jaz303/tipsy) without the weird jQuery
@@ -56,14 +55,14 @@ tip.show('#mylink');
 
 ### Tip#position(type, [options])
 
-  - `north`
-  - `north east`
-  - `north west`
-  - `south`
-  - `south east`
-  - `south west`
-  - `east`
-  - `west`
+  - `top`
+  - `top right`
+  - `top left`
+  - `bottom`
+  - `bottom right`
+  - `bottom left`
+  - `right`
+  - `left`
 
 Options:
 
