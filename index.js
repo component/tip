@@ -63,7 +63,7 @@ function Tip(content, options) {
   this.classes = classes(this.el);
   this.inner = query('.tip-inner', this.el);
   this.message(content);
-  this.position('above');
+  this.position('top');
   if (Tip.effect) this.effect(Tip.effect);
 }
 
@@ -160,12 +160,12 @@ Tip.prototype.effect = function(type){
 /**
  * Set position:
  *
- *  - `above`
- *  - `above left`
- *  - `above right`
- *  - `below`
- *  - `below left`
- *  - `below right`
+ *  - `top`
+ *  - `top left`
+ *  - `top right`
+ *  - `bottom`
+ *  - `bottom left`
+ *  - `bottom right`
  *  - `left`
  *  - `right`
  *
@@ -261,10 +261,10 @@ Tip.prototype.suggested = function(pos, off){
   var h = window.innerHeight;
 
   // too low
-  if (off.top + eh > top + h) return 'above';
+  if (off.top + eh > top + h) return 'top';
 
   // too high
-  if (off.top < top) return 'below';
+  if (off.top < top) return 'bottom';
 
   // too far to the right
   if (off.left + ew > left + w) return 'left';
@@ -307,12 +307,12 @@ Tip.prototype.offset = function(pos){
   var th = target.clientHeight;
 
   switch (pos) {
-    case 'above':
+    case 'top':
       return {
         top: to.top - eh,
         left: to.left + tw / 2 - ew / 2
       }
-    case 'below':
+    case 'bottom':
       return {
         top: to.top + th,
         left: to.left + tw / 2 - ew / 2
@@ -327,22 +327,22 @@ Tip.prototype.offset = function(pos){
         top: to.top + th / 2 - eh / 2,
         left: to.left - ew
       }
-    case 'above left':
+    case 'top left':
       return {
         top: to.top - eh,
         left: to.left + tw / 2 - ew + pad
       }
-    case 'above right':
+    case 'top right':
       return {
         top: to.top - eh,
         left: to.left + tw / 2 - pad
       }
-    case 'below left':
+    case 'bottom left':
       return {
         top: to.top + th,
         left: to.left + tw / 2 - ew + pad
       }
-    case 'below right':
+    case 'bottom right':
       return {
         top: to.top + th,
         left: to.left + tw / 2 - pad
