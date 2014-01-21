@@ -2,8 +2,8 @@
 <html>
   <head>
     <title>Tip</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <link rel="stylesheet" href="../build/build.css" />
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="../build/build.css">
     <style>
       body {
         padding: 60px;
@@ -39,6 +39,9 @@
         margin: 80px;
         width: 80%;
       }
+      .tip {
+        background-color: black;
+      }
     </style>
   </head>
   <body>
@@ -64,11 +67,12 @@
       <a href="#" id="big">Big</a>
     </div>
     <script>
-      var o = require('component-jquery');
+      var o = require('jquery');
       var Tip = require('tip');
+
       o('#bottom,#left,#right,#top,#bottom-right,#bottom-left,#top-right,#top-left').each(function(i, el){
-        var tip = new Tip(el.textContent);
-        tip.position(el.textContent.toLowerCase().split('-').join(' '));
+        var tip = new Tip(o(el).text());
+        tip.position(o(el).text().toLowerCase().split('-').join(' '));
         o(el).hover(function(){
           tip.show(el);
         }, function(){
