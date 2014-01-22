@@ -14,7 +14,7 @@
     "component/events": "1.0.4",
     "component/domify": "1.0.0",
     "component/classes": "1.1.2",
-    "dominicbarnes/css": "ie8_compat",
+    "component/css": "*",
     "timoxley/offset": "0.0.2"
   },
   "development": {
