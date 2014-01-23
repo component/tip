@@ -80,6 +80,10 @@ Options:
 ### Tip#hide([ms])
 
   Hide the tip immediately or wait `ms`.
+  
+### Tip#attach(el)
+  
+  Attach the tip to the given `el`, showing on `mouseover` and hiding on `mouseout`.
 
 ### Tip#effect(name)
 
