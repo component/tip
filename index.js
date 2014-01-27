@@ -3,6 +3,7 @@
  * Module dependencies.
  */
 
+var bind = require('bind');
 var Emitter = require('emitter');
 var events = require('events');
 var query = require('query');
@@ -381,14 +382,14 @@ Tip.prototype.hide = function(ms){
 
   // duration
   if (ms) {
-    this._hide = setTimeout(this.hide.bind(this), ms);
+    this._hide = setTimeout(bind(this, this.hide), ms);
     return this;
   }
 
   // hide
   this.classes.add('tip-hide');
   if (this._effect) {
-    setTimeout(this.remove.bind(this), 300);
+    setTimeout(bind(this, this.remove), 300);
   } else {
     self.remove();
   }

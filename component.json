@@ -8,6 +8,7 @@
     "ui"
   ],
   "dependencies": {
+    "component/bind": "*",
     "component/emitter": "1.1.0",
     "component/query": "0.0.1",
     "component/events": "1.0.4",
