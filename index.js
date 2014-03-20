@@ -1,4 +1,3 @@
-
 /**
  * Module dependencies.
  */
@@ -38,7 +37,7 @@ function tip(elem, options) {
   var els = ('string' == typeof elem) ? query.all(elem) : [elem];
   for(var i = 0, el; el = els[i]; i++) {
     var val = options.value || el.getAttribute('title');
-    var tip = new Tip(val);
+    var tip = new Tip(val, options);
     el.setAttribute('title', '');
     tip.cancelHideOnHover();
     tip.attach(el);
