@@ -307,8 +307,8 @@ Tip.prototype.offset = function(pos){
   var eh = el.clientHeight;
 
   var to = offset(target);
-  var tw = target.clientWidth;
-  var th = target.clientHeight;
+  var tw = target.offsetWidth;
+  var th = target.offsetHeight;
 
   switch (pos) {
     case 'top':
