@@ -19,7 +19,7 @@
   },
   "development": {
     "component/aurora-tip": "*",
-    "component/jquery": "*"
+    "component/event": "*"
   },
   "scripts": [
     "index.js",
