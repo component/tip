@@ -1,4 +1,13 @@
 
+1.0.1 / 2014-04-07
+==================
+
+ * update `component/events`
+ * instantiate Tip with options
+ * pin `component/css@0.0.4`
+ * add attach to API documentation
+ * fix IE8 compatibility
+
 1.0.0 / 2014-01-17
 ==================
 
