@@ -42,11 +42,17 @@
       #border {
         border-width: 10px;
       }
+      .hide-tip {
+        margin-left: 4em;
+      }
     </style>
   </head>
   <body>
     <title>Tip</title>
     <script src="../build/build.js"></script>
+    <div>
+      <button class="hide-tip">Hide tip</button>
+    </div>
     <div id="links">
       <a href="#" id="top">Top</a>
       <a href="#" id="bottom">Bottom</a>
@@ -112,6 +118,9 @@
 
       var absolute = new Tip('(25, 25)');
       absolute.show(25, 25).position('right');
+      events.bind(q('.hide-tip'), 'click', function() {
+        absolute.hide();
+      });
 
       Tip('#hover-value', { delay: 1000, value: 'Hello' });
 

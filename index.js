@@ -59,7 +59,6 @@ function Tip(content, options) {
   this.delay = options.delay || 300;
   this.el = html.cloneNode(true);
   this.events = events(this.el, this);
-  this.winEvents = events(window, this);
   this.classes = classes(this.el);
   this.inner = query('.tip-inner', this.el);
   this.message(content);
@@ -220,8 +219,11 @@ Tip.prototype.show = function(el){
   this.reposition();
   this.emit('show', this.target);
 
-  this.winEvents.bind('resize', 'reposition');
-  this.winEvents.bind('scroll', 'reposition');
+  if (!this.winEvents) {
+    this.winEvents = events(window, this);
+    this.winEvents.bind('resize', 'reposition');
+    this.winEvents.bind('scroll', 'reposition');
+  }
 
   return this;
 };
@@ -404,8 +406,10 @@ Tip.prototype.hide = function(ms){
  */
 
 Tip.prototype.remove = function(){
-  this.winEvents.unbind('resize', 'reposition');
-  this.winEvents.unbind('scroll', 'reposition');
+  if (this.winEvents) {
+    this.winEvents.unbind();
+    this.winEvents = null;
+  }
   this.emit('hide');
 
   var parent = this.el.parentNode;
