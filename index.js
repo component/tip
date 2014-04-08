@@ -9,7 +9,7 @@ var query = require('query');
 var domify = require('domify');
 var classes = require('classes');
 var css = require('css');
-var html = domify(require('./template'));
+var html = domify(require('./template.html'));
 var offset = require('offset');
 
 /**

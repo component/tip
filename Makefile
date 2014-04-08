@@ -1,9 +1,6 @@
 
-build: tip.css index.js template.js components
+build: tip.css index.js template.html components
 	@component build --dev
-
-template.js: template.html
-	@component convert $<
 
 components: component.json
 	@component install --dev

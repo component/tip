@@ -22,11 +22,13 @@
     "component/event": "*"
   },
   "scripts": [
-    "index.js",
-    "template.js"
+    "index.js"
   ],
   "styles": [
     "tip.css"
+  ],
+  "templates": [
+    "template.html"
   ],
   "license": "MIT"
 }
