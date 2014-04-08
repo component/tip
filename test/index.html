@@ -39,6 +39,9 @@
         margin: 80px;
         width: 80%;
       }
+      #border {
+        border-width: 10px;
+      }
     </style>
   </head>
   <body>
@@ -62,6 +65,7 @@
       <a href="#" id="hover-value">Hover Value</a>
       <a href="#" id="terse-hover-value">Terse Hover Value</a>
       <a href="#" id="big">Big</a>
+      <a href="#" id="border">Thick border</a>
     </div>
     <script>
       var Tip = require('tip');
@@ -116,6 +120,15 @@
       var big = new Tip('Just a bigger tip example');
       big.show('#big');
       big.position('top left');
+
+      var border = new Tip('Tip below');
+      border.position('bottom',{
+        auto: false
+      }).show('#border');
+      border = new Tip('Tip on the right');
+      border.position('right', {
+        auto: false
+      }).show('#border');
     </script>
   </body>
 </html>
