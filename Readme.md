@@ -8,6 +8,8 @@
 
   ![js maru](http://f.cl.ly/items/1I2V2o0q3M2p1E2H183w/Screen%20Shot%202012-08-02%20at%206.48.28%20PM.png)
 
+  Live demo is [here](http://component.github.io/tip/).
+
 ## Installation
 
 ```
@@ -80,9 +82,9 @@ Options:
 ### Tip#hide([ms])
 
   Hide the tip immediately or wait `ms`.
-  
+
 ### Tip#attach(el)
-  
+
   Attach the tip to the given `el`, showing on `mouseover` and hiding on `mouseout`.
 
 ### Tip#effect(name)

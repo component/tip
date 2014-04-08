@@ -30,5 +30,8 @@
   "templates": [
     "template.html"
   ],
+  "demo": [
+    "http://component.github.io/tip/"
+  ],
   "license": "MIT"
 }
