@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Tip</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="./build/build.css">
+    <style>
+      body {
+        padding: 60px;
+        font: 300 14px "Helvetica Neue", Helvetica, Arial;
+        min-height: 1000px;
+      }
+      a {
+        display: inline-block;
+        float: left;
+        border: 1px solid #eee;
+        padding: 10px;
+        color: black;
+        text-decoration: none;
+        margin: 80px 15px;
+        width: 180px;
+        height: 30px;
+        line-height: 30px;
+        text-align: center;
+        position: relative;
+      }
+      a::after {
+        display: block;
+        content: '.';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        color: #ddd;
+      }
+      #links {
+        min-width: 800px;
+      }
+      #big {
+        margin: 80px;
+        width: 80%;
+      }
+      #border {
+        border-width: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <title>Tip</title>
+    <script src="./build/build.js"></script>
+    <div id="links">
+      <a href="#" id="top">Top</a>
+      <a href="#" id="bottom">Bottom</a>
+      <a href="#" id="left">Left</a>
+      <a href="#" id="right">Right</a>
+      <a href="#" id="top-left">Top Left</a>
+      <a href="#" id="top-right">Top Right</a>
+      <a href="#" id="bottom-left">Bottom Left</a>
+      <a href="#" id="bottom-right">Bottom Right</a>
+      <a href="#" id="markup">Markup</a>
+      <a href="#" id="auto-top">Auto</a>
+      <a href="#" id="auto-bottom">Auto</a>
+      <a href="#" id="maru">Maru</a>
+      <a href="#" title="I'm using a title attr">Hover</a>
+      <a href="#" title="I'm another link">Hover</a>
+      <a href="#" id="hover-value">Hover Value</a>
+      <a href="#" id="terse-hover-value">Terse Hover Value</a>
+      <a href="#" id="big">Big</a>
+      <a href="#" id="border">Thick border</a>
+    </div>
+    <script>
+      var Tip = require('tip');
+      var q = require('query');
+      var events = require('event');
+
+      '#bottom,#left,#right,#top,#bottom-right,#bottom-left,#top-right,#top-left'.split(',').forEach(function(id){
+        var el = q(id),
+          tip = new Tip(el.textContent);
+        tip.position(el.textContent.toLowerCase().split('-').join(' '));
+
+        events.bind(el, 'mouseenter', function(){
+          tip.show(el);
+        });
+        events.bind(el, 'mouseleave', function(){
+          tip.hide(200);
+        });
+      })
+
+      var maru = new Tip('<img src="http://www.lifelounge.com.au/resources/IMGRELATED/maru-magic-show-catbag-youtube-cat-adventure.jpg" width="200" height="100" />');
+      maru.show('#maru');
+
+      var tip = new Tip('<input type="search" placeholder="Search" />');
+      tip.position('top');
+
+      var el = q('#markup');
+      events.bind(el, 'mouseenter', function(){
+        tip.show('#markup');
+      });
+      events.bind(el, 'mouseleave', function(){
+        tip.hide(200);
+      });
+
+      var auto = new Tip('Some tip contents');
+      auto.position('bottom');
+      auto.show('#auto-bottom');
+
+      var auto = new Tip('Some tip contents');
+      auto.position('top');
+      auto.show('#auto-top');
+
+
+      Tip('a[title]', { delay: 1000 });
+
+      var absolute = new Tip('(25, 25)');
+      absolute.show(25, 25).position('right');
+
+      Tip('#hover-value', { delay: 1000, value: 'Hello' });
+
+      Tip('#terse-hover-value', 'Hi');
+
+      var big = new Tip('Just a bigger tip example');
+      big.show('#big');
+      big.position('top left');
+
+      var border = new Tip('Tip below');
+      border.position('bottom',{
+        auto: false
+      }).show('#border');
+      border = new Tip('Tip on the right');
+      border.position('right', {
+        auto: false
+      }).show('#border');
+    </script>
+  </body>
+</html>
