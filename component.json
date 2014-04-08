@@ -9,11 +9,11 @@
   ],
   "dependencies": {
     "component/bind": "*",
-    "component/emitter": "1.1.0",
-    "component/query": "0.0.1",
+    "component/emitter": "1.1.2",
+    "component/query": "0.0.3",
     "component/events": "1.0.6",
-    "component/domify": "1.0.0",
-    "component/classes": "1.1.2",
+    "component/domify": "1.2.2",
+    "component/classes": "1.2.1",
     "component/css": "0.0.4",
     "timoxley/offset": "0.0.3"
   },
