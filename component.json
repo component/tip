@@ -11,11 +11,11 @@
     "component/bind": "*",
     "component/emitter": "1.1.0",
     "component/query": "0.0.1",
-    "component/events": "1.0.4",
+    "component/events": "1.0.6",
     "component/domify": "1.0.0",
     "component/classes": "1.1.2",
     "component/css": "0.0.4",
-    "timoxley/offset": "0.0.2"
+    "timoxley/offset": "0.0.3"
   },
   "development": {
     "component/aurora-tip": "*",
