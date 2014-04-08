@@ -363,6 +363,8 @@ Tip.prototype.offset = function(pos){
  */
 
 Tip.prototype.cancelHide = function(){
+  this.winEvents.unbind('resize', 'reposition');
+  this.winEvents.unbind('scroll', 'reposition');
   clearTimeout(this._hide);
 };
 
