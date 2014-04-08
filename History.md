@@ -1,4 +1,13 @@
 
+1.0.2 / 2014-04-08
+==================
+
+ * fix Tip position for elements with borders
+ * add live demo links
+ * remove jquery from examples
+ * remove component-convert step
+ * update pinned dependencies
+
 1.0.1 / 2014-04-07
 ==================
 
