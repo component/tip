@@ -3,6 +3,7 @@
   "description": "Tip component",
   "version": "1.0.3",
   "keywords": [
+    "browser",
     "component",
     "tooltip",
     "tip",
