@@ -3,6 +3,7 @@
   "description": "Tip component",
   "version": "1.0.3",
   "keywords": [
+    "component",
     "tooltip",
     "tip",
     "ui"
@@ -14,7 +15,7 @@
     "component/events": "1.0.6",
     "component/domify": "1.2.2",
     "component/classes": "1.2.1",
-    "component/css": "0.0.4",
+    "component/css": "0.0.5",
     "timoxley/offset": "0.0.3"
   },
   "development": {
