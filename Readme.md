@@ -12,8 +12,8 @@
 
 ## Installation
 
-```
-$ npm install tip-component
+``` bash
+$ npm install component-tip
 ```
 
 ## Features
