@@ -3,24 +3,36 @@
   "description": "Tip component",
   "version": "1.0.3",
   "keywords": [
+    "browser",
+    "component",
+    "tooltip",
     "tip",
-    "component"
+    "ui"
   ],
   "dependencies": {
-    "emitter-component": "1.0.0",
-    "jquery-component": "*"
+    "component-bind": "*",
+    "component-emitter": "1.1.2",
+    "component-query": "0.0.3",
+    "component-events": "1.0.6",
+    "domify": "1.2.2",
+    "component-classes": "1.2.1",
+    "component-css": "0.0.5",
+    "timoxley-offset": "0.0.3"
   },
   "component": {
     "styles": [
       "tip.css"
     ],
+    "templates": [
+      "template.html"
+    ],
     "scripts": {
-      "tip/index.js": "index.js",
-      "tip/template.js": "template.js"
+      "tip/index.js": "index.js"
     }
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/component/tip.git"
-  }
+  },
+  "license": "MIT"
 }
