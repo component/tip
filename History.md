@@ -1,4 +1,15 @@
 
+2.0.0 / 2014-05-27
+==================
+
+  * gitignore: ignore root level development temp files
+  * component, package: update "css" and "events"
+  * package: initial browserify support
+  * package: make dependencies be equivalent to component.json
+  * package: update name to "component-tip"
+  * Readme: update Installation section
+  * component: add "browser" keyword
+
 1.0.3 / 2014-04-08
 ==================
 
