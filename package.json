@@ -11,13 +11,26 @@
   ],
   "dependencies": {
     "component-bind": "*",
-    "component-emitter": "1.1.2",
-    "component-query": "0.0.3",
-    "component-events": "1.0.6",
-    "domify": "1.2.2",
     "component-classes": "1.2.1",
     "component-css": "0.0.5",
+    "component-emitter": "1.1.2",
+    "component-events": "1.0.6",
+    "component-query": "0.0.3",
+    "domify": "1.2.2",
+    "html-browserify": "0.0.4",
     "timoxley-offset": "0.0.3"
+  },
+  "browser": {
+    "bind": "component-bind",
+    "classes": "component-classes",
+    "css": "component-css",
+    "emitter": "component-emitter",
+    "events": "component-events",
+    "query": "component-query",
+    "offset": "timoxley-offset"
+  },
+  "browserify": {
+    "transform": "html-browserify"
   },
   "component": {
     "styles": [
