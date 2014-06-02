@@ -1,7 +1,7 @@
 {
   "name": "tip",
   "description": "Tip component",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "keywords": [
     "tooltip",
     "tip",
@@ -10,7 +10,7 @@
   "dependencies": {
     "component/emitter": "*",
     "component/inherit": "*",
-    "component/jquery": "*"
+    "components/jquery": "1.9.1"
   },
   "development": {
     "component/aurora-tip": "*"
