@@ -1,7 +1,7 @@
 {
   "name": "tip",
   "description": "Tip component",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "keywords": [
     "tooltip",
     "tip",
@@ -10,7 +10,7 @@
   "dependencies": {
     "component/emitter": "*",
     "component/inherit": "*",
-    "components/jquery": "2.1.0"
+    "virtru-components/jquery": "2.1.0"
   },
   "development": {
     "component/aurora-tip": "*"
