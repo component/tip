@@ -18,7 +18,7 @@
     "component-query": "0.0.3",
     "domify": "1.2.2",
     "html-browserify": "0.0.4",
-    "timoxley-offset": "0.0.3"
+    "timoxley-offset": "1.0.1"
   },
   "browser": {
     "bind": "component-bind",
