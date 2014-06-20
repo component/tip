@@ -304,7 +304,7 @@ Tip.prototype.offset = function(pos){
   var pad = 15;
 
   var tipDims = dimensions(this.el);
-  if (!to) throw new Error('could not determine dimensions of Tip element');
+  if (!tipDims) throw new Error('could not determine dimensions of Tip element');
   var ew = tipDims.width;
   var eh = tipDims.height;
 
