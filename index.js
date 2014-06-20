@@ -432,8 +432,8 @@ Tip.prototype.remove = function(){
 
 function dimensions(node) {
   var dims;
-  var ow = dims.offsetWidth;
-  var oh = dims.offsetHeight;
+  var ow = node.offsetWidth;
+  var oh = node.offsetHeight;
 
   // use `offsetWidth` and `offsetHeight` by default if available
   if (ow != null && oh != null) {
