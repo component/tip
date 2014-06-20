@@ -302,15 +302,19 @@ Tip.prototype.replaceClass = function(name){
 
 Tip.prototype.offset = function(pos){
   var pad = 15;
-  var el = this.el;
-  var target = this.target;
 
-  var ew = el.clientWidth;
-  var eh = el.clientHeight;
+  var tipDims = dimensions(this.el);
+  if (!to) throw new Error('could not determine dimensions of Tip element');
+  var ew = tipDims.width;
+  var eh = tipDims.height;
 
-  var to = offset(target);
-  var tw = target.offsetWidth;
-  var th = target.offsetHeight;
+  var to = offset(this.target);
+  if (!to) throw new Error('could not determine page offset of `target`');
+
+  var dims = dimensions(this.target);
+  if (!dims) throw new Error('could not determine dimensions of `target`');
+  var tw = dims.width;
+  var th = dims.height;
 
   switch (pos) {
     case 'top':
