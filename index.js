@@ -402,7 +402,7 @@ Tip.prototype.hide = function(ms){
  * Hide the tip without potential animation.
  *
  * @return {Tip}
- * @api
+ * @api public
  */
 
 Tip.prototype.remove = function(){
