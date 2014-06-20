@@ -416,3 +416,31 @@ Tip.prototype.remove = function(){
   if (parent) parent.removeChild(this.el);
   return this;
 };
+
+/**
+ * Returns an Object with `width` and `height` values which represent the
+ * dimensions of the given `node` which could be a DOM Element, Range, etc.
+ *
+ * TODO: extract this into a standalone module
+ *
+ * @private
+ */
+
+function dimensions(node) {
+  var dims;
+  var ow = dims.offsetWidth;
+  var oh = dims.offsetHeight;
+
+  // use `offsetWidth` and `offsetHeight` by default if available
+  if (ow != null && oh != null) {
+    dims = { width: ow, height: oh };
+  }
+
+  // fallback to `getBoundingClientRect()` if available
+  if ((!dims || (!dims.width && !dims.height)) &&
+      'function' == typeof node.getBoundingClientRect) {
+    dims = node.getBoundingClientRect();
+  }
+
+  return dims;
+}
