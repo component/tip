@@ -1,4 +1,13 @@
 
+2.1.0 / 2014-06-21
+==================
+
+  * index: use dimensions() to get the `target` dims
+  * index: add `dimensions()` calculation function
+  * index: fix @api JSDoc for remove()
+  * test: remove redundant `<title>` element
+  * package: update "timoxley-offset" to v1.0.1
+
 2.0.0 / 2014-05-27
 ==================
 
