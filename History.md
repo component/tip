@@ -1,4 +1,11 @@
 
+2.1.1 / 2014-07-14
+==================
+
+ * package: use "document-offset" module
+ * component: update deps
+ * package: update deps
+
 2.1.0 / 2014-06-21
 ==================
 
