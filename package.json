@@ -13,10 +13,10 @@
     "component-bind": "*",
     "component-classes": "1.2.1",
     "component-css": "0.0.6",
-    "component-emitter": "1.1.2",
+    "component-emitter": "1.1.3",
     "component-events": "1.0.7",
     "component-query": "0.0.3",
-    "domify": "1.2.2",
+    "domify": "1.3.0",
     "html-browserify": "0.0.4",
     "timoxley-offset": "1.0.1"
   },
