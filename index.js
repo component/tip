@@ -277,6 +277,7 @@ Tip.prototype.offset = function(pos){
   var doc = elem.ownerDocument;
   var win = doc.defaultView || doc.parentWindow;
 
+  // iterate through DOM tree and store offset values for every iframe
   do {
     to.top += elem.offsetTop;
     to.left += elem.offsetLeft;
@@ -287,8 +288,6 @@ Tip.prototype.offset = function(pos){
       win = win.parent;
     }
   } while(elem);
-
-  console.log("CALCULATING NEW OFFSET!!", to);
 
   var tw = target.outerWidth();
   var th = target.outerHeight();
