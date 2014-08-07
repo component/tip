@@ -271,7 +271,24 @@ Tip.prototype.offset = function(pos){
   var ew = el.outerWidth();
   var eh = el.outerHeight();
 
-  var to = target.offset();
+  // calculate the offset, taking iFrames into account
+  var to = {top: 0, left: 0};
+  var elem = target instanceof jQuery ? target[0] : target;
+  var doc = elem.ownerDocument;
+  var win = doc.defaultView || doc.parentWindow;
+
+  // iterate through DOM tree and store offset values for every iframe
+  do {
+    to.top += elem.offsetTop;
+    to.left += elem.offsetLeft;
+    elem = elem.offsetParent;
+
+    if(elem === null) {
+      elem = win.frameElement;
+      win = win.parent;
+    }
+  } while(elem);
+
   var tw = target.outerWidth();
   var th = target.outerHeight();
 
