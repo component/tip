@@ -75,13 +75,14 @@ Emitter(Tip.prototype);
 /**
  * Set tip `content`.
  *
- * @param {String|jQuery|Element} content
+ * @param {String|Element} content
  * @return {Tip} self
  * @api public
  */
 
 Tip.prototype.message = function(content){
-  this.inner.innerHTML = content;
+  if ('string' == typeof content) content = domify(content);
+  this.inner.appendChild(content);
   return this;
 };
 
@@ -95,7 +96,6 @@ Tip.prototype.message = function(content){
  */
 
 Tip.prototype.attach = function(el){
-  var self = this;
   this.target = el;
   this.handleEvents = events(el, this);
   this.handleEvents.bind('mouseover');
@@ -384,6 +384,8 @@ Tip.prototype.cancelHide = function(){
 
 Tip.prototype.hide = function(ms){
   var self = this;
+
+  this.emit('hiding');
 
   // duration
   if (ms) {
