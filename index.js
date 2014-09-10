@@ -385,6 +385,8 @@ Tip.prototype.cancelHide = function(){
 Tip.prototype.hide = function(ms){
   var self = this;
 
+  this.emit('hiding');
+
   // duration
   if (ms) {
     this._hide = setTimeout(bind(this, this.hide), ms);
