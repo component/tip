@@ -1,14 +1,14 @@
 {
   "name": "tip",
   "description": "Tip component",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "keywords": [
     "tooltip",
     "tip",
     "ui"
   ],
   "dependencies": {
-    "component/emitter": "*",
+    "virtru-components/emitter": "1.1.0",
     "component/inherit": "*",
     "virtru-components/jquery": "2.1.0"
   },

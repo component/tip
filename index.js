@@ -273,7 +273,7 @@ Tip.prototype.offset = function(pos){
 
   // calculate the offset, taking iFrames into account
   var to = {top: 0, left: 0};
-  var elem = target instanceof jQuery ? target[0] : target;
+  var elem = target instanceof o ? target[0] : target;
   var doc = elem.ownerDocument;
   var win = doc.defaultView || doc.parentWindow;
 
