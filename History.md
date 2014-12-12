@@ -1,4 +1,11 @@
 
+2.2.0 / 2014-12-11
+==================
+
+  * update "document-offset" to v1.0.3
+  * accept elements and html string for content (#45, @bmcmahen)
+  * add "hiding" event
+
 2.1.2 / 2014-08-01
 ==================
 
