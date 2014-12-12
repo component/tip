@@ -17,7 +17,7 @@
     "component/domify": "1.3.0",
     "component/classes": "1.2.1",
     "component/css": "0.0.6",
-    "timoxley/offset": "1.0.2"
+    "timoxley/offset": "1.0.3"
   },
   "development": {
     "component/aurora-tip": "*",
