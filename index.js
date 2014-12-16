@@ -2,15 +2,16 @@
  * Module dependencies.
  */
 
+var css = require('css');
 var bind = require('bind');
-var Emitter = require('emitter');
-var events = require('events');
 var query = require('query');
 var domify = require('domify');
+var events = require('events');
+var Emitter = require('emitter');
 var classes = require('classes');
-var css = require('css');
+var getBoundingClientRect = require('bounding-client-rect');
+
 var html = domify(require('./template.html'));
-var offset = require('offset');
 
 /**
  * Expose `Tip`.
@@ -303,18 +304,18 @@ Tip.prototype.replaceClass = function(name){
 Tip.prototype.offset = function(pos){
   var pad = 15;
 
-  var tipDims = dimensions(this.el);
-  if (!tipDims) throw new Error('could not determine dimensions of Tip element');
-  var ew = tipDims.width;
-  var eh = tipDims.height;
+  var tipRect = getBoundingClientRect(this.el);
+  if (!tipRect) throw new Error('could not get bounding client rect of Tip element');
+  var ew = tipRect.width;
+  var eh = tipRect.height;
 
-  var to = offset(this.target);
+  var targetRect = getBoundingClientRect(this.target);
+  if (!targetRect) throw new Error('could not get bounding client rect of `target`');
+  var tw = targetRect.width;
+  var th = targetRect.height;
+
+  var to = offset(targetRect, document);
   if (!to) throw new Error('could not determine page offset of `target`');
-
-  var dims = dimensions(this.target);
-  if (!dims) throw new Error('could not determine dimensions of `target`');
-  var tw = dims.width;
-  var th = dims.height;
 
   switch (pos) {
     case 'top':
@@ -424,29 +425,25 @@ Tip.prototype.remove = function(){
 };
 
 /**
- * Returns an Object with `width` and `height` values which represent the
- * dimensions of the given `node` which could be a DOM Element, Range, etc.
+ * Extracted from `timoxley/offset`, but directly using a
+ * TextRectangle instead of getting another version.
  *
- * TODO: extract this into a standalone module
- *
- * @private
+ * @param {TextRectangle} box - result from a `getBoundingClientRect()` call
+ * @param {Document} doc - Document instance to use
+ * @return {Object} an object with `top` and `left` Number properties
+ * @api private
  */
 
-function dimensions(node) {
-  var dims;
-  var ow = node.offsetWidth;
-  var oh = node.offsetHeight;
+function offset (box, doc) {
+  var body = doc.body || doc.getElementsByTagName('body')[0];
+  var docEl = doc.documentElement || body.parentNode;
+  var clientTop  = docEl.clientTop  || body.clientTop  || 0;
+  var clientLeft = docEl.clientLeft || body.clientLeft || 0;
+  var scrollTop  = window.pageYOffset || docEl.scrollTop;
+  var scrollLeft = window.pageXOffset || docEl.scrollLeft;
 
-  // use `offsetWidth` and `offsetHeight` by default if available
-  if (ow != null && oh != null) {
-    dims = { width: ow, height: oh };
-  }
-
-  // fallback to `getBoundingClientRect()` if available
-  if ((!dims || (!dims.width && !dims.height)) &&
-      'function' == typeof node.getBoundingClientRect) {
-    dims = node.getBoundingClientRect();
-  }
-
-  return dims;
+  return {
+    top: box.top  + scrollTop  - clientTop,
+    left: box.left + scrollLeft - clientLeft
+  };
 }
