@@ -2,15 +2,16 @@
  * Module dependencies.
  */
 
+var css = require('css');
 var bind = require('bind');
-var Emitter = require('emitter');
-var events = require('events');
 var query = require('query');
 var domify = require('domify');
-var classes = require('classes');
-var css = require('css');
-var html = domify(require('./template.html'));
+var events = require('events');
 var offset = require('offset');
+var Emitter = require('emitter');
+var classes = require('classes');
+
+var html = domify(require('./template.html'));
 
 /**
  * Expose `Tip`.
