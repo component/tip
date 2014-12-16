@@ -1,4 +1,10 @@
 
+2.3.0 / 2014-12-16
+==================
+
+  * use "bounding-client-rect" module (#49, @TooTallNate)
+  * index: rearrange require calls
+
 2.2.0 / 2014-12-11
 ==================
 
