@@ -199,7 +199,6 @@ Tip.prototype.show = function(el){
   if ('string' == typeof el) el = query(el);
 
   // show it
-  this.target = el;
   document.body.appendChild(this.el);
   this.classes.add('tip-' + this._position.replace(/\s+/g, '-'));
   this.classes.remove('tip-hide');
@@ -217,6 +216,7 @@ Tip.prototype.show = function(el){
   }
 
   // el
+  this.target = el;
   this.reposition();
   this.emit('show', this.target);
 
@@ -239,7 +239,10 @@ Tip.prototype.reposition = function(){
   var pos = this._position;
   var off = this.offset(pos);
   var newpos = this._auto && this.suggested(pos, off);
-  if (newpos) off = this.offset(pos = newpos);
+  if (newpos && newpos !== pos) {
+    pos = newpos;
+    off = this.offset(pos);
+  }
   this.replaceClass(pos);
   this.emit('reposition');
   css(this.el, off);
@@ -247,7 +250,8 @@ Tip.prototype.reposition = function(){
 
 /**
  * Compute the "suggested" position favouring `pos`.
- * Returns undefined if no suggestion is made.
+ *
+ * Returns `pos` if no suggestion can be determined.
  *
  * @param {String} pos
  * @param {Object} offset
@@ -265,17 +269,30 @@ Tip.prototype.suggested = function(pos, off){
   var w = window.innerWidth;
   var h = window.innerHeight;
 
+  var good = {
+    top: true,
+    bottom: true,
+    left: true,
+    right: true
+  };
+
   // too low
-  if (off.top + eh > top + h) return 'top';
+  if (off.top + eh > top + h) good.bottom = false;
 
   // too high
-  if (off.top < top) return 'bottom';
+  if (off.top < top) good.top = false;
 
   // too far to the right
-  if (off.left + ew > left + w) return 'left';
+  if (off.left + ew > left + w) good.right = false;
 
   // too far to the left
-  if (off.left < left) return 'right';
+  if (off.left < left) good.left = false;
+
+  if (good[pos]) return pos;
+  if (good.top) return 'top';
+  if (good.bottom) return 'bottom';
+  if (good.left) return 'left';
+  if (good.right) return 'right';
 };
 
 /**
