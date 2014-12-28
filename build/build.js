@@ -1,42 +1,105 @@
-
 /**
- * Require the given path.
+ * Require the module at `name`.
  *
- * @param {String} path
+ * @param {String} name
  * @return {Object} exports
  * @api public
  */
 
-function require(path, parent, orig) {
-  var resolved = require.resolve(path);
+function require(name) {
+  var module = require.modules[name];
+  if (!module) throw new Error('failed to require "' + name + '"');
 
-  // lookup failed
-  if (null == resolved) {
-    orig = orig || path;
-    parent = parent || 'root';
-    var err = new Error('Failed to require "' + orig + '" from "' + parent + '"');
-    err.path = orig;
-    err.parent = parent;
-    err.require = true;
-    throw err;
-  }
-
-  var module = require.modules[resolved];
-
-  // perform real require()
-  // by invoking the module's
-  // registered function
-  if (!module._resolving && !module.exports) {
-    var mod = {};
-    mod.exports = {};
-    mod.client = mod.component = true;
-    module._resolving = true;
-    module.call(this, mod.exports, require.relative(resolved), mod);
-    delete module._resolving;
-    module.exports = mod.exports;
+  if (!('exports' in module) && typeof module.definition === 'function') {
+    module.client = module.component = true;
+    module.definition.call(this, module.exports = {}, module);
+    delete module.definition;
   }
 
   return module.exports;
+}
+
+/**
+ * Meta info, accessible in the global scope unless you use AMD option.
+ */
+
+require.loader = 'component';
+
+/**
+ * Internal helper object, contains a sorting function for semantiv versioning
+ */
+require.helper = {};
+require.helper.semVerSort = function(a, b) {
+  var aArray = a.version.split('.');
+  var bArray = b.version.split('.');
+  for (var i=0; i<aArray.length; ++i) {
+    var aInt = parseInt(aArray[i], 10);
+    var bInt = parseInt(bArray[i], 10);
+    if (aInt === bInt) {
+      var aLex = aArray[i].substr((""+aInt).length);
+      var bLex = bArray[i].substr((""+bInt).length);
+      if (aLex === '' && bLex !== '') return 1;
+      if (aLex !== '' && bLex === '') return -1;
+      if (aLex !== '' && bLex !== '') return aLex > bLex ? 1 : -1;
+      continue;
+    } else if (aInt > bInt) {
+      return 1;
+    } else {
+      return -1;
+    }
+  }
+  return 0;
+}
+
+/**
+ * Find and require a module which name starts with the provided name.
+ * If multiple modules exists, the highest semver is used. 
+ * This function can only be used for remote dependencies.
+
+ * @param {String} name - module name: `user~repo`
+ * @param {Boolean} returnPath - returns the canonical require path if true, 
+ *                               otherwise it returns the epxorted module
+ */
+require.latest = function (name, returnPath) {
+  function showError(name) {
+    throw new Error('failed to find latest module of "' + name + '"');
+  }
+  // only remotes with semvers, ignore local files conataining a '/'
+  var versionRegexp = /(.*)~(.*)@v?(\d+\.\d+\.\d+[^\/]*)$/;
+  var remoteRegexp = /(.*)~(.*)/;
+  if (!remoteRegexp.test(name)) showError(name);
+  var moduleNames = Object.keys(require.modules);
+  var semVerCandidates = [];
+  var otherCandidates = []; // for instance: name of the git branch
+  for (var i=0; i<moduleNames.length; i++) {
+    var moduleName = moduleNames[i];
+    if (new RegExp(name + '@').test(moduleName)) {
+        var version = moduleName.substr(name.length+1);
+        var semVerMatch = versionRegexp.exec(moduleName);
+        if (semVerMatch != null) {
+          semVerCandidates.push({version: version, name: moduleName});
+        } else {
+          otherCandidates.push({version: version, name: moduleName});
+        } 
+    }
+  }
+  if (semVerCandidates.concat(otherCandidates).length === 0) {
+    showError(name);
+  }
+  if (semVerCandidates.length > 0) {
+    var module = semVerCandidates.sort(require.helper.semVerSort).pop().name;
+    if (returnPath === true) {
+      return module;
+    }
+    return require(module);
+  }
+  // if the build contains more than one branch of the same module
+  // you should not use this funciton
+  var module = otherCandidates.sort(function(a, b) {return a.name > b.name})[0].name;
+  if (returnPath === true) {
+    return module;
+  }
+  return require(module);
 }
 
 /**
@@ -46,160 +109,33 @@ function require(path, parent, orig) {
 require.modules = {};
 
 /**
- * Registered aliases.
- */
-
-require.aliases = {};
-
-/**
- * Resolve `path`.
+ * Register module at `name` with callback `definition`.
  *
- * Lookup:
- *
- *   - PATH/index.js
- *   - PATH.js
- *   - PATH
- *
- * @param {String} path
- * @return {String} path or null
- * @api private
- */
-
-require.resolve = function(path) {
-  if (path.charAt(0) === '/') path = path.slice(1);
-
-  var paths = [
-    path,
-    path + '.js',
-    path + '.json',
-    path + '/index.js',
-    path + '/index.json'
-  ];
-
-  for (var i = 0; i < paths.length; i++) {
-    var path = paths[i];
-    if (require.modules.hasOwnProperty(path)) return path;
-    if (require.aliases.hasOwnProperty(path)) return require.aliases[path];
-  }
-};
-
-/**
- * Normalize `path` relative to the current path.
- *
- * @param {String} curr
- * @param {String} path
- * @return {String}
- * @api private
- */
-
-require.normalize = function(curr, path) {
-  var segs = [];
-
-  if ('.' != path.charAt(0)) return path;
-
-  curr = curr.split('/');
-  path = path.split('/');
-
-  for (var i = 0; i < path.length; ++i) {
-    if ('..' == path[i]) {
-      curr.pop();
-    } else if ('.' != path[i] && '' != path[i]) {
-      segs.push(path[i]);
-    }
-  }
-
-  return curr.concat(segs).join('/');
-};
-
-/**
- * Register module at `path` with callback `definition`.
- *
- * @param {String} path
+ * @param {String} name
  * @param {Function} definition
  * @api private
  */
 
-require.register = function(path, definition) {
-  require.modules[path] = definition;
+require.register = function (name, definition) {
+  require.modules[name] = {
+    definition: definition
+  };
 };
 
 /**
- * Alias a module definition.
+ * Define a module's exports immediately with `exports`.
  *
- * @param {String} from
- * @param {String} to
+ * @param {String} name
+ * @param {Generic} exports
  * @api private
  */
 
-require.alias = function(from, to) {
-  if (!require.modules.hasOwnProperty(from)) {
-    throw new Error('Failed to alias "' + from + '", it does not exist');
-  }
-  require.aliases[to] = from;
-};
-
-/**
- * Return a require function relative to the `parent` path.
- *
- * @param {String} parent
- * @return {Function}
- * @api private
- */
-
-require.relative = function(parent) {
-  var p = require.normalize(parent, '..');
-
-  /**
-   * lastIndexOf helper.
-   */
-
-  function lastIndexOf(arr, obj) {
-    var i = arr.length;
-    while (i--) {
-      if (arr[i] === obj) return i;
-    }
-    return -1;
-  }
-
-  /**
-   * The relative require() itself.
-   */
-
-  function localRequire(path) {
-    var resolved = localRequire.resolve(path);
-    return require(resolved, parent, path);
-  }
-
-  /**
-   * Resolve relative to the parent.
-   */
-
-  localRequire.resolve = function(path) {
-    var c = path.charAt(0);
-    if ('/' == c) return path.slice(1);
-    if ('.' == c) return require.normalize(p, path);
-
-    // resolve deps by returning
-    // the dep in the nearest "deps"
-    // directory
-    var segs = parent.split('/');
-    var i = lastIndexOf(segs, 'deps') + 1;
-    if (!i) i = 0;
-    path = segs.slice(0, i + 1).join('/') + '/deps/' + path;
-    return path;
+require.define = function (name, exports) {
+  require.modules[name] = {
+    exports: exports
   };
-
-  /**
-   * Check if module is defined at `path`.
-   */
-
-  localRequire.exists = function(path) {
-    return require.modules.hasOwnProperty(localRequire.resolve(path));
-  };
-
-  return localRequire;
 };
-require.register("component-bind/index.js", Function("exports, require, module",
+require.register("component~bind@1.0.0", Function("exports, module",
 "/**\n\
  * Slice reference.\n\
  */\n\
@@ -223,25 +159,17 @@ module.exports = function(obj, fn){\n\
     return fn.apply(obj, args.concat(slice.call(arguments)));\n\
   }\n\
 };\n\
-//@ sourceURL=component-bind/index.js"
+\n\
+//# sourceURL=components/component/bind/1.0.0/index.js"
 ));
-require.register("component-indexof/index.js", Function("exports, require, module",
-"module.exports = function(arr, obj){\n\
-  if (arr.indexOf) return arr.indexOf(obj);\n\
-  for (var i = 0; i < arr.length; ++i) {\n\
-    if (arr[i] === obj) return i;\n\
-  }\n\
-  return -1;\n\
-};//@ sourceURL=component-indexof/index.js"
-));
-require.register("component-emitter/index.js", Function("exports, require, module",
+
+require.modules["component-bind"] = require.modules["component~bind@1.0.0"];
+require.modules["component~bind"] = require.modules["component~bind@1.0.0"];
+require.modules["bind"] = require.modules["component~bind@1.0.0"];
+
+
+require.register("component~emitter@1.1.3", Function("exports, module",
 "\n\
-/**\n\
- * Module dependencies.\n\
- */\n\
-\n\
-var index = require('indexof');\n\
-\n\
 /**\n\
  * Expose `Emitter`.\n\
  */\n\
@@ -309,7 +237,7 @@ Emitter.prototype.once = function(event, fn){\n\
     fn.apply(this, arguments);\n\
   }\n\
 \n\
-  fn._off = on;\n\
+  on.fn = fn;\n\
   this.on(event, on);\n\
   return this;\n\
 };\n\
@@ -347,8 +275,14 @@ Emitter.prototype.removeEventListener = function(event, fn){\n\
   }\n\
 \n\
   // remove specific handler\n\
-  var i = index(callbacks, fn._off || fn);\n\
-  if (~i) callbacks.splice(i, 1);\n\
+  var cb;\n\
+  for (var i = 0; i < callbacks.length; i++) {\n\
+    cb = callbacks[i];\n\
+    if (cb === fn || cb.fn === fn) {\n\
+      callbacks.splice(i, 1);\n\
+      break;\n\
+    }\n\
+  }\n\
   return this;\n\
 };\n\
 \n\
@@ -399,11 +333,61 @@ Emitter.prototype.listeners = function(event){\n\
 Emitter.prototype.hasListeners = function(event){\n\
   return !! this.listeners(event).length;\n\
 };\n\
-//@ sourceURL=component-emitter/index.js"
+\n\
+//# sourceURL=components/component/emitter/1.1.3/index.js"
 ));
-require.register("component-query/index.js", Function("exports, require, module",
-"\n\
-function one(selector, el) {\n\
+
+require.modules["component-emitter"] = require.modules["component~emitter@1.1.3"];
+require.modules["component~emitter"] = require.modules["component~emitter@1.1.3"];
+require.modules["emitter"] = require.modules["component~emitter@1.1.3"];
+
+
+require.register("component~event@0.1.4", Function("exports, module",
+"var bind = window.addEventListener ? 'addEventListener' : 'attachEvent',\n\
+    unbind = window.removeEventListener ? 'removeEventListener' : 'detachEvent',\n\
+    prefix = bind !== 'addEventListener' ? 'on' : '';\n\
+\n\
+/**\n\
+ * Bind `el` event `type` to `fn`.\n\
+ *\n\
+ * @param {Element} el\n\
+ * @param {String} type\n\
+ * @param {Function} fn\n\
+ * @param {Boolean} capture\n\
+ * @return {Function}\n\
+ * @api public\n\
+ */\n\
+\n\
+exports.bind = function(el, type, fn, capture){\n\
+  el[bind](prefix + type, fn, capture || false);\n\
+  return fn;\n\
+};\n\
+\n\
+/**\n\
+ * Unbind `el` event `type`'s callback `fn`.\n\
+ *\n\
+ * @param {Element} el\n\
+ * @param {String} type\n\
+ * @param {Function} fn\n\
+ * @param {Boolean} capture\n\
+ * @return {Function}\n\
+ * @api public\n\
+ */\n\
+\n\
+exports.unbind = function(el, type, fn, capture){\n\
+  el[unbind](prefix + type, fn, capture || false);\n\
+  return fn;\n\
+};\n\
+//# sourceURL=components/component/event/0.1.4/index.js"
+));
+
+require.modules["component-event"] = require.modules["component~event@0.1.4"];
+require.modules["component~event"] = require.modules["component~event@0.1.4"];
+require.modules["event"] = require.modules["component~event@0.1.4"];
+
+
+require.register("component~query@0.0.3", Function("exports, module",
+"function one(selector, el) {\n\
   return el.querySelector(selector);\n\
 }\n\
 \n\
@@ -422,15 +406,23 @@ exports.engine = function(obj){\n\
   if (!obj.all) throw new Error('.all callback required');\n\
   one = obj.one;\n\
   exports.all = obj.all;\n\
+  return exports;\n\
 };\n\
-//@ sourceURL=component-query/index.js"
+\n\
+//# sourceURL=components/component/query/0.0.3/index.js"
 ));
-require.register("component-matches-selector/index.js", Function("exports, require, module",
+
+require.modules["component-query"] = require.modules["component~query@0.0.3"];
+require.modules["component~query"] = require.modules["component~query@0.0.3"];
+require.modules["query"] = require.modules["component~query@0.0.3"];
+
+
+require.register("component~matches-selector@0.1.5", Function("exports, module",
 "/**\n\
  * Module dependencies.\n\
  */\n\
 \n\
-var query = require('query');\n\
+var query = require('component~query@0.0.3');\n\
 \n\
 /**\n\
  * Element prototype.\n\
@@ -464,6 +456,7 @@ module.exports = match;\n\
  */\n\
 \n\
 function match(el, selector) {\n\
+  if (!el || el.nodeType !== 1) return false;\n\
   if (vendor) return vendor.call(el, selector);\n\
   var nodes = query.all(selector, el.parentNode);\n\
   for (var i = 0; i < nodes.length; ++i) {\n\
@@ -471,10 +464,17 @@ function match(el, selector) {\n\
   }\n\
   return false;\n\
 }\n\
-//@ sourceURL=component-matches-selector/index.js"
+\n\
+//# sourceURL=components/component/matches-selector/0.1.5/index.js"
 ));
-require.register("discore-closest/index.js", Function("exports, require, module",
-"var matches = require('matches-selector')\n\
+
+require.modules["component-matches-selector"] = require.modules["component~matches-selector@0.1.5"];
+require.modules["component~matches-selector"] = require.modules["component~matches-selector@0.1.5"];
+require.modules["matches-selector"] = require.modules["component~matches-selector@0.1.5"];
+
+
+require.register("component~closest@0.1.4", Function("exports, module",
+"var matches = require('component~matches-selector@0.1.5')\n\
 \n\
 module.exports = function (element, selector, checkYoSelf, root) {\n\
   element = checkYoSelf ? {parentNode: element} : element\n\
@@ -490,17 +490,25 @@ module.exports = function (element, selector, checkYoSelf, root) {\n\
     // the selector matches the root\n\
     // (when the root is not the document)\n\
     if (element === root)\n\
-      return  \n\
+      return\n\
   }\n\
-}//@ sourceURL=discore-closest/index.js"
+}\n\
+\n\
+//# sourceURL=components/component/closest/0.1.4/index.js"
 ));
-require.register("component-delegate/index.js", Function("exports, require, module",
+
+require.modules["component-closest"] = require.modules["component~closest@0.1.4"];
+require.modules["component~closest"] = require.modules["component~closest@0.1.4"];
+require.modules["closest"] = require.modules["component~closest@0.1.4"];
+
+
+require.register("component~delegate@0.2.3", Function("exports, module",
 "/**\n\
  * Module dependencies.\n\
  */\n\
 \n\
-var closest = require('closest')\n\
-  , event = require('event');\n\
+var closest = require('component~closest@0.1.4')\n\
+  , event = require('component~event@0.1.4');\n\
 \n\
 /**\n\
  * Delegate event `type` to `selector`\n\
@@ -537,16 +545,23 @@ exports.bind = function(el, selector, type, fn, capture){\n\
 exports.unbind = function(el, type, fn, capture){\n\
   event.unbind(el, type, fn, capture);\n\
 };\n\
-//@ sourceURL=component-delegate/index.js"
+\n\
+//# sourceURL=components/component/delegate/0.2.3/index.js"
 ));
-require.register("component-events/index.js", Function("exports, require, module",
+
+require.modules["component-delegate"] = require.modules["component~delegate@0.2.3"];
+require.modules["component~delegate"] = require.modules["component~delegate@0.2.3"];
+require.modules["delegate"] = require.modules["component~delegate@0.2.3"];
+
+
+require.register("component~events@1.0.9", Function("exports, module",
 "\n\
 /**\n\
  * Module dependencies.\n\
  */\n\
 \n\
-var events = require('event');\n\
-var delegate = require('delegate');\n\
+var events = require('component~event@0.1.4');\n\
+var delegate = require('component~delegate@0.2.3');\n\
 \n\
 /**\n\
  * Expose `Events`.\n\
@@ -716,9 +731,16 @@ function parse(event) {\n\
     selector: parts.join(' ')\n\
   }\n\
 }\n\
-//@ sourceURL=component-events/index.js"
+\n\
+//# sourceURL=components/component/events/1.0.9/index.js"
 ));
-require.register("component-domify/index.js", Function("exports, require, module",
+
+require.modules["component-events"] = require.modules["component~events@1.0.9"];
+require.modules["component~events"] = require.modules["component~events@1.0.9"];
+require.modules["events"] = require.modules["component~events@1.0.9"];
+
+
+require.register("component~domify@1.3.0", Function("exports, module",
 "\n\
 /**\n\
  * Expose `parse`.\n\
@@ -731,40 +753,61 @@ module.exports = parse;\n\
  */\n\
 \n\
 var map = {\n\
-  option: [1, '<select multiple=\"multiple\">', '</select>'],\n\
-  optgroup: [1, '<select multiple=\"multiple\">', '</select>'],\n\
   legend: [1, '<fieldset>', '</fieldset>'],\n\
-  thead: [1, '<table>', '</table>'],\n\
-  tbody: [1, '<table>', '</table>'],\n\
-  tfoot: [1, '<table>', '</table>'],\n\
-  colgroup: [1, '<table>', '</table>'],\n\
-  caption: [1, '<table>', '</table>'],\n\
   tr: [2, '<table><tbody>', '</tbody></table>'],\n\
-  td: [3, '<table><tbody><tr>', '</tr></tbody></table>'],\n\
-  th: [3, '<table><tbody><tr>', '</tr></tbody></table>'],\n\
   col: [2, '<table><tbody></tbody><colgroup>', '</colgroup></table>'],\n\
   _default: [0, '', '']\n\
 };\n\
 \n\
+map.td =\n\
+map.th = [3, '<table><tbody><tr>', '</tr></tbody></table>'];\n\
+\n\
+map.option =\n\
+map.optgroup = [1, '<select multiple=\"multiple\">', '</select>'];\n\
+\n\
+map.thead =\n\
+map.tbody =\n\
+map.colgroup =\n\
+map.caption =\n\
+map.tfoot = [1, '<table>', '</table>'];\n\
+\n\
+map.text =\n\
+map.circle =\n\
+map.ellipse =\n\
+map.line =\n\
+map.path =\n\
+map.polygon =\n\
+map.polyline =\n\
+map.rect = [1, '<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">','</svg>'];\n\
+\n\
 /**\n\
- * Parse `html` and return the children.\n\
+ * Parse `html` and return a DOM Node instance, which could be a TextNode,\n\
+ * HTML DOM Node of some kind (<div> for example), or a DocumentFragment\n\
+ * instance, depending on the contents of the `html` string.\n\
  *\n\
- * @param {String} html\n\
- * @return {Array}\n\
+ * @param {String} html - HTML string to \"domify\"\n\
+ * @param {Document} doc - The `document` instance to create the Node for\n\
+ * @return {DOMNode} the TextNode, DOM Node, or DocumentFragment instance\n\
  * @api private\n\
  */\n\
 \n\
-function parse(html) {\n\
+function parse(html, doc) {\n\
   if ('string' != typeof html) throw new TypeError('String expected');\n\
+\n\
+  // default to the global `document` object\n\
+  if (!doc) doc = document;\n\
 \n\
   // tag name\n\
   var m = /<([\\w:]+)/.exec(html);\n\
-  if (!m) throw new Error('No elements were generated.');\n\
+  if (!m) return doc.createTextNode(html);\n\
+\n\
+  html = html.replace(/^\\s+|\\s+$/g, ''); // Remove leading/trailing whitespace\n\
+\n\
   var tag = m[1];\n\
 \n\
   // body support\n\
   if (tag == 'body') {\n\
-    var el = document.createElement('html');\n\
+    var el = doc.createElement('html');\n\
     el.innerHTML = html;\n\
     return el.removeChild(el.lastChild);\n\
   }\n\
@@ -774,31 +817,54 @@ function parse(html) {\n\
   var depth = wrap[0];\n\
   var prefix = wrap[1];\n\
   var suffix = wrap[2];\n\
-  var el = document.createElement('div');\n\
+  var el = doc.createElement('div');\n\
   el.innerHTML = prefix + html + suffix;\n\
   while (depth--) el = el.lastChild;\n\
 \n\
-  var els = el.children;\n\
-  if (1 == els.length) {\n\
-    return el.removeChild(els[0]);\n\
+  // one element\n\
+  if (el.firstChild == el.lastChild) {\n\
+    return el.removeChild(el.firstChild);\n\
   }\n\
 \n\
-  var fragment = document.createDocumentFragment();\n\
-  while (els.length) {\n\
-    fragment.appendChild(el.removeChild(els[0]));\n\
+  // several elements\n\
+  var fragment = doc.createDocumentFragment();\n\
+  while (el.firstChild) {\n\
+    fragment.appendChild(el.removeChild(el.firstChild));\n\
   }\n\
 \n\
   return fragment;\n\
 }\n\
-//@ sourceURL=component-domify/index.js"
+\n\
+//# sourceURL=components/component/domify/1.3.0/index.js"
 ));
-require.register("component-classes/index.js", Function("exports, require, module",
-"\n\
-/**\n\
+
+require.modules["component-domify"] = require.modules["component~domify@1.3.0"];
+require.modules["component~domify"] = require.modules["component~domify@1.3.0"];
+require.modules["domify"] = require.modules["component~domify@1.3.0"];
+
+
+require.register("component~indexof@0.0.3", Function("exports, module",
+"module.exports = function(arr, obj){\n\
+  if (arr.indexOf) return arr.indexOf(obj);\n\
+  for (var i = 0; i < arr.length; ++i) {\n\
+    if (arr[i] === obj) return i;\n\
+  }\n\
+  return -1;\n\
+};\n\
+//# sourceURL=components/component/indexof/0.0.3/index.js"
+));
+
+require.modules["component-indexof"] = require.modules["component~indexof@0.0.3"];
+require.modules["component~indexof"] = require.modules["component~indexof@0.0.3"];
+require.modules["indexof"] = require.modules["component~indexof@0.0.3"];
+
+
+require.register("component~classes@1.2.1", Function("exports, module",
+"/**\n\
  * Module dependencies.\n\
  */\n\
 \n\
-var index = require('indexof');\n\
+var index = require('component~indexof@0.0.3');\n\
 \n\
 /**\n\
  * Whitespace regexp.\n\
@@ -832,6 +898,7 @@ module.exports = function(el){\n\
  */\n\
 \n\
 function ClassList(el) {\n\
+  if (!el) throw new Error('A DOM element reference is required');\n\
   this.el = el;\n\
   this.list = el.classList;\n\
 }\n\
@@ -907,26 +974,45 @@ ClassList.prototype.removeMatching = function(re){\n\
 };\n\
 \n\
 /**\n\
- * Toggle class `name`.\n\
+ * Toggle class `name`, can force state via `force`.\n\
+ *\n\
+ * For browsers that support classList, but do not support `force` yet,\n\
+ * the mistake will be detected and corrected.\n\
  *\n\
  * @param {String} name\n\
+ * @param {Boolean} force\n\
  * @return {ClassList}\n\
  * @api public\n\
  */\n\
 \n\
-ClassList.prototype.toggle = function(name){\n\
+ClassList.prototype.toggle = function(name, force){\n\
   // classList\n\
   if (this.list) {\n\
-    this.list.toggle(name);\n\
+    if (\"undefined\" !== typeof force) {\n\
+      if (force !== this.list.toggle(name, force)) {\n\
+        this.list.toggle(name); // toggle again to correct\n\
+      }\n\
+    } else {\n\
+      this.list.toggle(name);\n\
+    }\n\
     return this;\n\
   }\n\
 \n\
   // fallback\n\
-  if (this.has(name)) {\n\
-    this.remove(name);\n\
+  if (\"undefined\" !== typeof force) {\n\
+    if (!force) {\n\
+      this.remove(name);\n\
+    } else {\n\
+      this.add(name);\n\
+    }\n\
   } else {\n\
-    this.add(name);\n\
+    if (this.has(name)) {\n\
+      this.remove(name);\n\
+    } else {\n\
+      this.add(name);\n\
+    }\n\
   }\n\
+\n\
   return this;\n\
 };\n\
 \n\
@@ -958,9 +1044,58 @@ ClassList.prototype.contains = function(name){\n\
     ? this.list.contains(name)\n\
     : !! ~index(this.array(), name);\n\
 };\n\
-//@ sourceURL=component-classes/index.js"
+\n\
+//# sourceURL=components/component/classes/1.2.1/index.js"
 ));
-require.register("component-props/index.js", Function("exports, require, module",
+
+require.modules["component-classes"] = require.modules["component~classes@1.2.1"];
+require.modules["component~classes"] = require.modules["component~classes@1.2.1"];
+require.modules["classes"] = require.modules["component~classes@1.2.1"];
+
+
+require.register("component~type@1.0.0", Function("exports, module",
+"\n\
+/**\n\
+ * toString ref.\n\
+ */\n\
+\n\
+var toString = Object.prototype.toString;\n\
+\n\
+/**\n\
+ * Return the type of `val`.\n\
+ *\n\
+ * @param {Mixed} val\n\
+ * @return {String}\n\
+ * @api public\n\
+ */\n\
+\n\
+module.exports = function(val){\n\
+  switch (toString.call(val)) {\n\
+    case '[object Function]': return 'function';\n\
+    case '[object Date]': return 'date';\n\
+    case '[object RegExp]': return 'regexp';\n\
+    case '[object Arguments]': return 'arguments';\n\
+    case '[object Array]': return 'array';\n\
+    case '[object String]': return 'string';\n\
+  }\n\
+\n\
+  if (val === null) return 'null';\n\
+  if (val === undefined) return 'undefined';\n\
+  if (val && val.nodeType === 1) return 'element';\n\
+  if (val === Object(val)) return 'object';\n\
+\n\
+  return typeof val;\n\
+};\n\
+\n\
+//# sourceURL=components/component/type/1.0.0/index.js"
+));
+
+require.modules["component-type"] = require.modules["component~type@1.0.0"];
+require.modules["component~type"] = require.modules["component~type@1.0.0"];
+require.modules["type"] = require.modules["component~type@1.0.0"];
+
+
+require.register("component~props@1.1.2", Function("exports, module",
 "/**\n\
  * Global Names\n\
  */\n\
@@ -1046,14 +1181,27 @@ function prefixed(str) {\n\
     return str + _;\n\
   };\n\
 }\n\
-//@ sourceURL=component-props/index.js"
+\n\
+//# sourceURL=components/component/props/1.1.2/index.js"
 ));
-require.register("component-to-function/index.js", Function("exports, require, module",
-"/**\n\
+
+require.modules["component-props"] = require.modules["component~props@1.1.2"];
+require.modules["component~props"] = require.modules["component~props@1.1.2"];
+require.modules["props"] = require.modules["component~props@1.1.2"];
+
+
+require.register("component~to-function@2.0.5", Function("exports, module",
+"\n\
+/**\n\
  * Module Dependencies\n\
  */\n\
 \n\
-var expr = require('props');\n\
+var expr;\n\
+try {\n\
+  expr = require('component~props@1.1.2');\n\
+} catch(e) {\n\
+  expr = require('component~props@1.1.2');\n\
+}\n\
 \n\
 /**\n\
  * Expose `toFunction()`.\n\
@@ -1095,7 +1243,7 @@ function toFunction(obj) {\n\
 function defaultToFunction(val) {\n\
   return function(obj){\n\
     return val === obj;\n\
-  }\n\
+  };\n\
 }\n\
 \n\
 /**\n\
@@ -1109,7 +1257,7 @@ function defaultToFunction(val) {\n\
 function regexpToFunction(re) {\n\
   return function(obj){\n\
     return re.test(obj);\n\
-  }\n\
+  };\n\
 }\n\
 \n\
 /**\n\
@@ -1137,11 +1285,11 @@ function stringToFunction(str) {\n\
  */\n\
 \n\
 function objectToFunction(obj) {\n\
-  var match = {}\n\
+  var match = {};\n\
   for (var key in obj) {\n\
     match[key] = typeof obj[key] === 'string'\n\
       ? defaultToFunction(obj[key])\n\
-      : toFunction(obj[key])\n\
+      : toFunction(obj[key]);\n\
   }\n\
   return function(val){\n\
     if (typeof val !== 'object') return false;\n\
@@ -1150,7 +1298,7 @@ function objectToFunction(obj) {\n\
       if (!match[key](val[key])) return false;\n\
     }\n\
     return true;\n\
-  }\n\
+  };\n\
 }\n\
 \n\
 /**\n\
@@ -1165,60 +1313,58 @@ function get(str) {\n\
   var props = expr(str);\n\
   if (!props.length) return '_.' + str;\n\
 \n\
-  var val;\n\
-  for(var i = 0, prop; prop = props[i]; i++) {\n\
+  var val, i, prop;\n\
+  for (i = 0; i < props.length; i++) {\n\
+    prop = props[i];\n\
     val = '_.' + prop;\n\
     val = \"('function' == typeof \" + val + \" ? \" + val + \"() : \" + val + \")\";\n\
-    str = str.replace(new RegExp(prop, 'g'), val);\n\
+\n\
+    // mimic negative lookbehind to avoid problems with nested properties\n\
+    str = stripNested(prop, str, val);\n\
   }\n\
 \n\
   return str;\n\
 }\n\
-//@ sourceURL=component-to-function/index.js"
-));
-require.register("component-type/index.js", Function("exports, require, module",
-"\n\
-/**\n\
- * toString ref.\n\
- */\n\
-\n\
-var toString = Object.prototype.toString;\n\
 \n\
 /**\n\
- * Return the type of `val`.\n\
+ * Mimic negative lookbehind to avoid problems with nested properties.\n\
  *\n\
- * @param {Mixed} val\n\
+ * See: http://blog.stevenlevithan.com/archives/mimic-lookbehind-javascript\n\
+ *\n\
+ * @param {String} prop\n\
+ * @param {String} str\n\
+ * @param {String} val\n\
  * @return {String}\n\
- * @api public\n\
+ * @api private\n\
  */\n\
 \n\
-module.exports = function(val){\n\
-  switch (toString.call(val)) {\n\
-    case '[object Function]': return 'function';\n\
-    case '[object Date]': return 'date';\n\
-    case '[object RegExp]': return 'regexp';\n\
-    case '[object Arguments]': return 'arguments';\n\
-    case '[object Array]': return 'array';\n\
-    case '[object String]': return 'string';\n\
-  }\n\
+function stripNested (prop, str, val) {\n\
+  return str.replace(new RegExp('(\\\\.)?' + prop, 'g'), function($0, $1) {\n\
+    return $1 ? $0 : val;\n\
+  });\n\
+}\n\
 \n\
-  if (val === null) return 'null';\n\
-  if (val === undefined) return 'undefined';\n\
-  if (val && val.nodeType === 1) return 'element';\n\
-  if (val === Object(val)) return 'object';\n\
-\n\
-  return typeof val;\n\
-};\n\
-//@ sourceURL=component-type/index.js"
+//# sourceURL=components/component/to-function/2.0.5/index.js"
 ));
-require.register("component-each/index.js", Function("exports, require, module",
+
+require.modules["component-to-function"] = require.modules["component~to-function@2.0.5"];
+require.modules["component~to-function"] = require.modules["component~to-function@2.0.5"];
+require.modules["to-function"] = require.modules["component~to-function@2.0.5"];
+
+
+require.register("component~each@0.2.5", Function("exports, module",
 "\n\
 /**\n\
  * Module dependencies.\n\
  */\n\
 \n\
-var type = require('type');\n\
-var toFunction = require('to-function');\n\
+try {\n\
+  var type = require('component~type@1.0.0');\n\
+} catch (err) {\n\
+  var type = require('component~type@1.0.0');\n\
+}\n\
+\n\
+var toFunction = require('component~to-function@2.0.5');\n\
 \n\
 /**\n\
  * HOP reference.\n\
@@ -1296,88 +1442,440 @@ function array(obj, fn, ctx) {\n\
     fn.call(ctx, obj[i], i);\n\
   }\n\
 }\n\
-//@ sourceURL=component-each/index.js"
+\n\
+//# sourceURL=components/component/each/0.2.5/index.js"
 ));
-require.register("visionmedia-debug/index.js", Function("exports, require, module",
-"if ('undefined' == typeof window) {\n\
-  module.exports = require('./lib/debug');\n\
-} else {\n\
-  module.exports = require('./debug');\n\
+
+require.modules["component-each"] = require.modules["component~each@0.2.5"];
+require.modules["component~each"] = require.modules["component~each@0.2.5"];
+require.modules["each"] = require.modules["component~each@0.2.5"];
+
+
+require.register("guille~ms.js@0.6.1", Function("exports, module",
+"/**\n\
+ * Helpers.\n\
+ */\n\
+\n\
+var s = 1000;\n\
+var m = s * 60;\n\
+var h = m * 60;\n\
+var d = h * 24;\n\
+var y = d * 365.25;\n\
+\n\
+/**\n\
+ * Parse or format the given `val`.\n\
+ *\n\
+ * Options:\n\
+ *\n\
+ *  - `long` verbose formatting [false]\n\
+ *\n\
+ * @param {String|Number} val\n\
+ * @param {Object} options\n\
+ * @return {String|Number}\n\
+ * @api public\n\
+ */\n\
+\n\
+module.exports = function(val, options){\n\
+  options = options || {};\n\
+  if ('string' == typeof val) return parse(val);\n\
+  return options.long\n\
+    ? long(val)\n\
+    : short(val);\n\
+};\n\
+\n\
+/**\n\
+ * Parse the given `str` and return milliseconds.\n\
+ *\n\
+ * @param {String} str\n\
+ * @return {Number}\n\
+ * @api private\n\
+ */\n\
+\n\
+function parse(str) {\n\
+  var match = /^((?:\\d+)?\\.?\\d+) *(ms|seconds?|s|minutes?|m|hours?|h|days?|d|years?|y)?$/i.exec(str);\n\
+  if (!match) return;\n\
+  var n = parseFloat(match[1]);\n\
+  var type = (match[2] || 'ms').toLowerCase();\n\
+  switch (type) {\n\
+    case 'years':\n\
+    case 'year':\n\
+    case 'y':\n\
+      return n * y;\n\
+    case 'days':\n\
+    case 'day':\n\
+    case 'd':\n\
+      return n * d;\n\
+    case 'hours':\n\
+    case 'hour':\n\
+    case 'h':\n\
+      return n * h;\n\
+    case 'minutes':\n\
+    case 'minute':\n\
+    case 'm':\n\
+      return n * m;\n\
+    case 'seconds':\n\
+    case 'second':\n\
+    case 's':\n\
+      return n * s;\n\
+    case 'ms':\n\
+      return n;\n\
+  }\n\
 }\n\
-//@ sourceURL=visionmedia-debug/index.js"
+\n\
+/**\n\
+ * Short format for `ms`.\n\
+ *\n\
+ * @param {Number} ms\n\
+ * @return {String}\n\
+ * @api private\n\
+ */\n\
+\n\
+function short(ms) {\n\
+  if (ms >= d) return Math.round(ms / d) + 'd';\n\
+  if (ms >= h) return Math.round(ms / h) + 'h';\n\
+  if (ms >= m) return Math.round(ms / m) + 'm';\n\
+  if (ms >= s) return Math.round(ms / s) + 's';\n\
+  return ms + 'ms';\n\
+}\n\
+\n\
+/**\n\
+ * Long format for `ms`.\n\
+ *\n\
+ * @param {Number} ms\n\
+ * @return {String}\n\
+ * @api private\n\
+ */\n\
+\n\
+function long(ms) {\n\
+  return plural(ms, d, 'day')\n\
+    || plural(ms, h, 'hour')\n\
+    || plural(ms, m, 'minute')\n\
+    || plural(ms, s, 'second')\n\
+    || ms + ' ms';\n\
+}\n\
+\n\
+/**\n\
+ * Pluralization helper.\n\
+ */\n\
+\n\
+function plural(ms, n, name) {\n\
+  if (ms < n) return;\n\
+  if (ms < n * 1.5) return Math.floor(ms / n) + ' ' + name;\n\
+  return Math.ceil(ms / n) + ' ' + name + 's';\n\
+}\n\
+\n\
+//# sourceURL=components/guille/ms.js/0.6.1/index.js"
 ));
-require.register("visionmedia-debug/debug.js", Function("exports, require, module",
+
+require.modules["guille-ms.js"] = require.modules["guille~ms.js@0.6.1"];
+require.modules["guille~ms.js"] = require.modules["guille~ms.js@0.6.1"];
+require.modules["ms.js"] = require.modules["guille~ms.js@0.6.1"];
+
+
+require.register("visionmedia~debug@2.1.0", Function("exports, module",
 "\n\
 /**\n\
+ * This is the web browser implementation of `debug()`.\n\
+ *\n\
  * Expose `debug()` as the module.\n\
  */\n\
 \n\
-module.exports = debug;\n\
+exports = module.exports = require('visionmedia~debug@2.1.0/debug.js');\n\
+exports.log = log;\n\
+exports.formatArgs = formatArgs;\n\
+exports.save = save;\n\
+exports.load = load;\n\
+exports.useColors = useColors;\n\
 \n\
 /**\n\
- * Create a debugger with the given `name`.\n\
- *\n\
- * @param {String} name\n\
- * @return {Type}\n\
- * @api public\n\
+ * Colors.\n\
  */\n\
 \n\
-function debug(name) {\n\
-  if (!debug.enabled(name)) return function(){};\n\
+exports.colors = [\n\
+  'lightseagreen',\n\
+  'forestgreen',\n\
+  'goldenrod',\n\
+  'dodgerblue',\n\
+  'darkorchid',\n\
+  'crimson'\n\
+];\n\
 \n\
-  return function(fmt){\n\
-    fmt = coerce(fmt);\n\
+/**\n\
+ * Currently only WebKit-based Web Inspectors, Firefox >= v31,\n\
+ * and the Firebug extension (any Firefox version) are known\n\
+ * to support \"%c\" CSS customizations.\n\
+ *\n\
+ * TODO: add a `localStorage` variable to explicitly enable/disable colors\n\
+ */\n\
 \n\
-    var curr = new Date;\n\
-    var ms = curr - (debug[name] || curr);\n\
-    debug[name] = curr;\n\
-\n\
-    fmt = name\n\
-      + ' '\n\
-      + fmt\n\
-      + ' +' + debug.humanize(ms);\n\
-\n\
-    // This hackery is required for IE8\n\
-    // where `console.log` doesn't have 'apply'\n\
-    window.console\n\
-      && console.log\n\
-      && Function.prototype.apply.call(console.log, console, arguments);\n\
-  }\n\
+function useColors() {\n\
+  // is webkit? http://stackoverflow.com/a/16459606/376773\n\
+  return ('WebkitAppearance' in document.documentElement.style) ||\n\
+    // is firebug? http://stackoverflow.com/a/398120/376773\n\
+    (window.console && (console.firebug || (console.exception && console.table))) ||\n\
+    // is firefox >= v31?\n\
+    // https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages\n\
+    (navigator.userAgent.toLowerCase().match(/firefox\\/(\\d+)/) && parseInt(RegExp.$1, 10) >= 31);\n\
 }\n\
 \n\
 /**\n\
- * The currently active debug mode names.\n\
+ * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.\n\
  */\n\
 \n\
-debug.names = [];\n\
-debug.skips = [];\n\
+exports.formatters.j = function(v) {\n\
+  return JSON.stringify(v);\n\
+};\n\
+\n\
 \n\
 /**\n\
- * Enables a debug mode by name. This can include modes\n\
- * separated by a colon and wildcards.\n\
+ * Colorize log arguments if enabled.\n\
  *\n\
- * @param {String} name\n\
  * @api public\n\
  */\n\
 \n\
-debug.enable = function(name) {\n\
-  try {\n\
-    localStorage.debug = name;\n\
-  } catch(e){}\n\
+function formatArgs() {\n\
+  var args = arguments;\n\
+  var useColors = this.useColors;\n\
 \n\
-  var split = (name || '').split(/[\\s,]+/)\n\
-    , len = split.length;\n\
+  args[0] = (useColors ? '%c' : '')\n\
+    + this.namespace\n\
+    + (useColors ? ' %c' : ' ')\n\
+    + args[0]\n\
+    + (useColors ? '%c ' : ' ')\n\
+    + '+' + exports.humanize(this.diff);\n\
+\n\
+  if (!useColors) return args;\n\
+\n\
+  var c = 'color: ' + this.color;\n\
+  args = [args[0], c, 'color: inherit'].concat(Array.prototype.slice.call(args, 1));\n\
+\n\
+  // the final \"%c\" is somewhat tricky, because there could be other\n\
+  // arguments passed either before or after the %c, so we need to\n\
+  // figure out the correct index to insert the CSS into\n\
+  var index = 0;\n\
+  var lastC = 0;\n\
+  args[0].replace(/%[a-z%]/g, function(match) {\n\
+    if ('%%' === match) return;\n\
+    index++;\n\
+    if ('%c' === match) {\n\
+      // we only are interested in the *last* %c\n\
+      // (the user may have provided their own)\n\
+      lastC = index;\n\
+    }\n\
+  });\n\
+\n\
+  args.splice(lastC, 0, c);\n\
+  return args;\n\
+}\n\
+\n\
+/**\n\
+ * Invokes `console.log()` when available.\n\
+ * No-op when `console.log` is not a \"function\".\n\
+ *\n\
+ * @api public\n\
+ */\n\
+\n\
+function log() {\n\
+  // This hackery is required for IE8,\n\
+  // where the `console.log` function doesn't have 'apply'\n\
+  return 'object' == typeof console\n\
+    && 'function' == typeof console.log\n\
+    && Function.prototype.apply.call(console.log, console, arguments);\n\
+}\n\
+\n\
+/**\n\
+ * Save `namespaces`.\n\
+ *\n\
+ * @param {String} namespaces\n\
+ * @api private\n\
+ */\n\
+\n\
+function save(namespaces) {\n\
+  try {\n\
+    if (null == namespaces) {\n\
+      localStorage.removeItem('debug');\n\
+    } else {\n\
+      localStorage.debug = namespaces;\n\
+    }\n\
+  } catch(e) {}\n\
+}\n\
+\n\
+/**\n\
+ * Load `namespaces`.\n\
+ *\n\
+ * @return {String} returns the previously persisted debug modes\n\
+ * @api private\n\
+ */\n\
+\n\
+function load() {\n\
+  var r;\n\
+  try {\n\
+    r = localStorage.debug;\n\
+  } catch(e) {}\n\
+  return r;\n\
+}\n\
+\n\
+/**\n\
+ * Enable namespaces listed in `localStorage.debug` initially.\n\
+ */\n\
+\n\
+exports.enable(load());\n\
+\n\
+//# sourceURL=components/visionmedia/debug/2.1.0/browser.js"
+));
+
+require.register("visionmedia~debug@2.1.0/debug.js", Function("exports, module",
+"\n\
+/**\n\
+ * This is the common logic for both the Node.js and web browser\n\
+ * implementations of `debug()`.\n\
+ *\n\
+ * Expose `debug()` as the module.\n\
+ */\n\
+\n\
+exports = module.exports = debug;\n\
+exports.coerce = coerce;\n\
+exports.disable = disable;\n\
+exports.enable = enable;\n\
+exports.enabled = enabled;\n\
+exports.humanize = require('guille~ms.js@0.6.1');\n\
+\n\
+/**\n\
+ * The currently active debug mode names, and names to skip.\n\
+ */\n\
+\n\
+exports.names = [];\n\
+exports.skips = [];\n\
+\n\
+/**\n\
+ * Map of special \"%n\" handling functions, for the debug \"format\" argument.\n\
+ *\n\
+ * Valid key names are a single, lowercased letter, i.e. \"n\".\n\
+ */\n\
+\n\
+exports.formatters = {};\n\
+\n\
+/**\n\
+ * Previously assigned color.\n\
+ */\n\
+\n\
+var prevColor = 0;\n\
+\n\
+/**\n\
+ * Previous log timestamp.\n\
+ */\n\
+\n\
+var prevTime;\n\
+\n\
+/**\n\
+ * Select a color.\n\
+ *\n\
+ * @return {Number}\n\
+ * @api private\n\
+ */\n\
+\n\
+function selectColor() {\n\
+  return exports.colors[prevColor++ % exports.colors.length];\n\
+}\n\
+\n\
+/**\n\
+ * Create a debugger with the given `namespace`.\n\
+ *\n\
+ * @param {String} namespace\n\
+ * @return {Function}\n\
+ * @api public\n\
+ */\n\
+\n\
+function debug(namespace) {\n\
+\n\
+  // define the `disabled` version\n\
+  function disabled() {\n\
+  }\n\
+  disabled.enabled = false;\n\
+\n\
+  // define the `enabled` version\n\
+  function enabled() {\n\
+\n\
+    var self = enabled;\n\
+\n\
+    // set `diff` timestamp\n\
+    var curr = +new Date();\n\
+    var ms = curr - (prevTime || curr);\n\
+    self.diff = ms;\n\
+    self.prev = prevTime;\n\
+    self.curr = curr;\n\
+    prevTime = curr;\n\
+\n\
+    // add the `color` if not set\n\
+    if (null == self.useColors) self.useColors = exports.useColors();\n\
+    if (null == self.color && self.useColors) self.color = selectColor();\n\
+\n\
+    var args = Array.prototype.slice.call(arguments);\n\
+\n\
+    args[0] = exports.coerce(args[0]);\n\
+\n\
+    if ('string' !== typeof args[0]) {\n\
+      // anything else let's inspect with %o\n\
+      args = ['%o'].concat(args);\n\
+    }\n\
+\n\
+    // apply any `formatters` transformations\n\
+    var index = 0;\n\
+    args[0] = args[0].replace(/%([a-z%])/g, function(match, format) {\n\
+      // if we encounter an escaped % then don't increase the array index\n\
+      if (match === '%%') return match;\n\
+      index++;\n\
+      var formatter = exports.formatters[format];\n\
+      if ('function' === typeof formatter) {\n\
+        var val = args[index];\n\
+        match = formatter.call(self, val);\n\
+\n\
+        // now we need to remove `args[index]` since it's inlined in the `format`\n\
+        args.splice(index, 1);\n\
+        index--;\n\
+      }\n\
+      return match;\n\
+    });\n\
+\n\
+    if ('function' === typeof exports.formatArgs) {\n\
+      args = exports.formatArgs.apply(self, args);\n\
+    }\n\
+    var logFn = enabled.log || exports.log || console.log.bind(console);\n\
+    logFn.apply(self, args);\n\
+  }\n\
+  enabled.enabled = true;\n\
+\n\
+  var fn = exports.enabled(namespace) ? enabled : disabled;\n\
+\n\
+  fn.namespace = namespace;\n\
+\n\
+  return fn;\n\
+}\n\
+\n\
+/**\n\
+ * Enables a debug mode by namespaces. This can include modes\n\
+ * separated by a colon and wildcards.\n\
+ *\n\
+ * @param {String} namespaces\n\
+ * @api public\n\
+ */\n\
+\n\
+function enable(namespaces) {\n\
+  exports.save(namespaces);\n\
+\n\
+  var split = (namespaces || '').split(/[\\s,]+/);\n\
+  var len = split.length;\n\
 \n\
   for (var i = 0; i < len; i++) {\n\
-    name = split[i].replace('*', '.*?');\n\
-    if (name[0] === '-') {\n\
-      debug.skips.push(new RegExp('^' + name.substr(1) + '$'));\n\
-    }\n\
-    else {\n\
-      debug.names.push(new RegExp('^' + name + '$'));\n\
+    if (!split[i]) continue; // ignore empty strings\n\
+    namespaces = split[i].replace(/\\*/g, '.*?');\n\
+    if (namespaces[0] === '-') {\n\
+      exports.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));\n\
+    } else {\n\
+      exports.names.push(new RegExp('^' + namespaces + '$'));\n\
     }\n\
   }\n\
-};\n\
+}\n\
 \n\
 /**\n\
  * Disable debug output.\n\
@@ -1385,28 +1883,9 @@ debug.enable = function(name) {\n\
  * @api public\n\
  */\n\
 \n\
-debug.disable = function(){\n\
-  debug.enable('');\n\
-};\n\
-\n\
-/**\n\
- * Humanize the given `ms`.\n\
- *\n\
- * @param {Number} m\n\
- * @return {String}\n\
- * @api private\n\
- */\n\
-\n\
-debug.humanize = function(ms) {\n\
-  var sec = 1000\n\
-    , min = 60 * 1000\n\
-    , hour = 60 * min;\n\
-\n\
-  if (ms >= hour) return (ms / hour).toFixed(1) + 'h';\n\
-  if (ms >= min) return (ms / min).toFixed(1) + 'm';\n\
-  if (ms >= sec) return (ms / sec | 0) + 's';\n\
-  return ms + 'ms';\n\
-};\n\
+function disable() {\n\
+  exports.enable('');\n\
+}\n\
 \n\
 /**\n\
  * Returns true if the given mode name is enabled, false otherwise.\n\
@@ -1416,22 +1895,27 @@ debug.humanize = function(ms) {\n\
  * @api public\n\
  */\n\
 \n\
-debug.enabled = function(name) {\n\
-  for (var i = 0, len = debug.skips.length; i < len; i++) {\n\
-    if (debug.skips[i].test(name)) {\n\
+function enabled(name) {\n\
+  var i, len;\n\
+  for (i = 0, len = exports.skips.length; i < len; i++) {\n\
+    if (exports.skips[i].test(name)) {\n\
       return false;\n\
     }\n\
   }\n\
-  for (var i = 0, len = debug.names.length; i < len; i++) {\n\
-    if (debug.names[i].test(name)) {\n\
+  for (i = 0, len = exports.names.length; i < len; i++) {\n\
+    if (exports.names[i].test(name)) {\n\
       return true;\n\
     }\n\
   }\n\
   return false;\n\
-};\n\
+}\n\
 \n\
 /**\n\
  * Coerce `val`.\n\
+ *\n\
+ * @param {Mixed} val\n\
+ * @return {Mixed}\n\
+ * @api private\n\
  */\n\
 \n\
 function coerce(val) {\n\
@@ -1439,14 +1923,15 @@ function coerce(val) {\n\
   return val;\n\
 }\n\
 \n\
-// persist\n\
-\n\
-try {\n\
-  if (window.localStorage) debug.enable(localStorage.debug);\n\
-} catch(e){}\n\
-//@ sourceURL=visionmedia-debug/debug.js"
+//# sourceURL=components/visionmedia/debug/2.1.0/debug.js"
 ));
-require.register("ianstormtaylor-to-no-case/index.js", Function("exports, require, module",
+
+require.modules["visionmedia-debug"] = require.modules["visionmedia~debug@2.1.0"];
+require.modules["visionmedia~debug"] = require.modules["visionmedia~debug@2.1.0"];
+require.modules["debug"] = require.modules["visionmedia~debug@2.1.0"];
+
+
+require.register("ianstormtaylor~to-no-case@0.1.0", Function("exports, module",
 "\n\
 /**\n\
  * Expose `toNoCase`.\n\
@@ -1520,11 +2005,18 @@ function uncamelize (string) {\n\
   return string.replace(camelSplitter, function (m, previous, uppers) {\n\
     return previous + ' ' + uppers.toLowerCase().split('').join(' ');\n\
   });\n\
-}//@ sourceURL=ianstormtaylor-to-no-case/index.js"
+}\n\
+//# sourceURL=components/ianstormtaylor/to-no-case/0.1.0/index.js"
 ));
-require.register("ianstormtaylor-to-space-case/index.js", Function("exports, require, module",
+
+require.modules["ianstormtaylor-to-no-case"] = require.modules["ianstormtaylor~to-no-case@0.1.0"];
+require.modules["ianstormtaylor~to-no-case"] = require.modules["ianstormtaylor~to-no-case@0.1.0"];
+require.modules["to-no-case"] = require.modules["ianstormtaylor~to-no-case@0.1.0"];
+
+
+require.register("ianstormtaylor~to-space-case@0.1.2", Function("exports, module",
 "\n\
-var clean = require('to-no-case');\n\
+var clean = require('ianstormtaylor~to-no-case@0.1.0');\n\
 \n\
 \n\
 /**\n\
@@ -1546,11 +2038,18 @@ function toSpaceCase (string) {\n\
   return clean(string).replace(/[\\W_]+(.|$)/g, function (matches, match) {\n\
     return match ? ' ' + match : '';\n\
   });\n\
-}//@ sourceURL=ianstormtaylor-to-space-case/index.js"
+}\n\
+//# sourceURL=components/ianstormtaylor/to-space-case/0.1.2/index.js"
 ));
-require.register("ianstormtaylor-to-camel-case/index.js", Function("exports, require, module",
+
+require.modules["ianstormtaylor-to-space-case"] = require.modules["ianstormtaylor~to-space-case@0.1.2"];
+require.modules["ianstormtaylor~to-space-case"] = require.modules["ianstormtaylor~to-space-case@0.1.2"];
+require.modules["to-space-case"] = require.modules["ianstormtaylor~to-space-case@0.1.2"];
+
+
+require.register("ianstormtaylor~to-camel-case@0.2.1", Function("exports, module",
 "\n\
-var toSpace = require('to-space-case');\n\
+var toSpace = require('ianstormtaylor~to-space-case@0.1.2');\n\
 \n\
 \n\
 /**\n\
@@ -1572,9 +2071,16 @@ function toCamelCase (string) {\n\
   return toSpace(string).replace(/\\s(\\w)/g, function (matches, letter) {\n\
     return letter.toUpperCase();\n\
   });\n\
-}//@ sourceURL=ianstormtaylor-to-camel-case/index.js"
+}\n\
+//# sourceURL=components/ianstormtaylor/to-camel-case/0.2.1/index.js"
 ));
-require.register("component-within-document/index.js", Function("exports, require, module",
+
+require.modules["ianstormtaylor-to-camel-case"] = require.modules["ianstormtaylor~to-camel-case@0.2.1"];
+require.modules["ianstormtaylor~to-camel-case"] = require.modules["ianstormtaylor~to-camel-case@0.2.1"];
+require.modules["to-camel-case"] = require.modules["ianstormtaylor~to-camel-case@0.2.1"];
+
+
+require.register("component~within-document@0.0.1", Function("exports, module",
 "\n\
 /**\n\
  * Check if `el` is within the document.\n\
@@ -1590,16 +2096,23 @@ module.exports = function(el) {\n\
     if (node == document) return true;\n\
   }\n\
   return false;\n\
-};//@ sourceURL=component-within-document/index.js"
+};\n\
+//# sourceURL=components/component/within-document/0.0.1/index.js"
 ));
-require.register("component-css/index.js", Function("exports, require, module",
+
+require.modules["component-within-document"] = require.modules["component~within-document@0.0.1"];
+require.modules["component~within-document"] = require.modules["component~within-document@0.0.1"];
+require.modules["within-document"] = require.modules["component~within-document@0.0.1"];
+
+
+require.register("component~css@0.0.6", Function("exports, module",
 "/**\n\
  * Module Dependencies\n\
  */\n\
 \n\
-var debug = require('debug')('css');\n\
-var set = require('./lib/style');\n\
-var get = require('./lib/css');\n\
+var debug = require('visionmedia~debug@2.1.0')('css');\n\
+var set = require('component~css@0.0.6/lib/style.js');\n\
+var get = require('component~css@0.0.6/lib/css.js');\n\
 \n\
 /**\n\
  * Expose `css`\n\
@@ -1651,17 +2164,19 @@ function setStyles(el, props) {\n\
 \n\
   return el;\n\
 }\n\
-//@ sourceURL=component-css/index.js"
+\n\
+//# sourceURL=components/component/css/0.0.6/index.js"
 ));
-require.register("component-css/lib/css.js", Function("exports, require, module",
+
+require.register("component~css@0.0.6/lib/css.js", Function("exports, module",
 "/**\n\
  * Module Dependencies\n\
  */\n\
 \n\
-var debug = require('debug')('css:css');\n\
-var camelcase = require('to-camel-case');\n\
-var computed = require('./computed');\n\
-var property = require('./prop');\n\
+var debug = require('visionmedia~debug@2.1.0')('css:css');\n\
+var camelcase = require('ianstormtaylor~to-camel-case@0.2.1');\n\
+var computed = require('component~css@0.0.6/lib/computed.js');\n\
+var property = require('component~css@0.0.6/lib/prop.js');\n\
 \n\
 /**\n\
  * Expose `css`\n\
@@ -1689,7 +2204,7 @@ var cssNormalTransform = {\n\
  */\n\
 \n\
 function css(el, prop, extra, styles) {\n\
-  var hooks = require('./hooks');\n\
+  var hooks = require('component~css@0.0.6/lib/hooks.js');\n\
   var orig = camelcase(prop);\n\
   var style = el.style;\n\
   var val;\n\
@@ -1716,7 +2231,7 @@ function css(el, prop, extra, styles) {\n\
 \n\
   // Return, converting to number if forced or a qualifier was provided and val looks numeric\n\
   if ('' == extra || extra) {\n\
-    debug('converting value: %s into a number');\n\
+    debug('converting value: %s into a number', val);\n\
     var num = parseFloat(val);\n\
     return true === extra || isNumeric(num) ? num || 0 : val;\n\
   }\n\
@@ -1734,16 +2249,18 @@ function css(el, prop, extra, styles) {\n\
 function isNumeric(obj) {\n\
   return !isNan(parseFloat(obj)) && isFinite(obj);\n\
 }\n\
-//@ sourceURL=component-css/lib/css.js"
+\n\
+//# sourceURL=components/component/css/0.0.6/lib/css.js"
 ));
-require.register("component-css/lib/prop.js", Function("exports, require, module",
+
+require.register("component~css@0.0.6/lib/prop.js", Function("exports, module",
 "/**\n\
  * Module dependencies\n\
  */\n\
 \n\
-var debug = require('debug')('css:prop');\n\
-var camelcase = require('to-camel-case');\n\
-var vendor = require('./vendor');\n\
+var debug = require('visionmedia~debug@2.1.0')('css:prop');\n\
+var camelcase = require('ianstormtaylor~to-camel-case@0.2.1');\n\
+var vendor = require('component~css@0.0.6/lib/vendor.js');\n\
 \n\
 /**\n\
  * Export `prop`\n\
@@ -1756,7 +2273,7 @@ module.exports = prop;\n\
  */\n\
 \n\
 var cssProps = {\n\
-  'float': 'cssFloat' in document.body.style ? 'cssFloat' : 'styleFloat'\n\
+  'float': 'cssFloat' in document.documentElement.style ? 'cssFloat' : 'styleFloat'\n\
 };\n\
 \n\
 /**\n\
@@ -1770,12 +2287,14 @@ var cssProps = {\n\
 \n\
 function prop(prop, style) {\n\
   prop = cssProps[prop] || (cssProps[prop] = vendor(prop, style));\n\
-  debug('transform property: %s => %s');\n\
+  debug('transform property: %s => %s', prop, style);\n\
   return prop;\n\
 }\n\
-//@ sourceURL=component-css/lib/prop.js"
+\n\
+//# sourceURL=components/component/css/0.0.6/lib/prop.js"
 ));
-require.register("component-css/lib/swap.js", Function("exports, require, module",
+
+require.register("component~css@0.0.6/lib/swap.js", Function("exports, module",
 "/**\n\
  * Export `swap`\n\
  */\n\
@@ -1808,18 +2327,20 @@ function swap(el, options, fn, args) {\n\
 \n\
   return ret;\n\
 }\n\
-//@ sourceURL=component-css/lib/swap.js"
+\n\
+//# sourceURL=components/component/css/0.0.6/lib/swap.js"
 ));
-require.register("component-css/lib/style.js", Function("exports, require, module",
+
+require.register("component~css@0.0.6/lib/style.js", Function("exports, module",
 "/**\n\
  * Module Dependencies\n\
  */\n\
 \n\
-var debug = require('debug')('css:style');\n\
-var camelcase = require('to-camel-case');\n\
-var support = require('./support');\n\
-var property = require('./prop');\n\
-var hooks = require('./hooks');\n\
+var debug = require('visionmedia~debug@2.1.0')('css:style');\n\
+var camelcase = require('ianstormtaylor~to-camel-case@0.2.1');\n\
+var support = require('component~css@0.0.6/lib/support.js');\n\
+var property = require('component~css@0.0.6/lib/prop.js');\n\
+var hooks = require('component~css@0.0.6/lib/hooks.js');\n\
 \n\
 /**\n\
  * Expose `style`\n\
@@ -1917,24 +2438,26 @@ function get(el, prop, orig, extra) {\n\
   debug('getting %s', ret);\n\
   return ret;\n\
 }\n\
-//@ sourceURL=component-css/lib/style.js"
+\n\
+//# sourceURL=components/component/css/0.0.6/lib/style.js"
 ));
-require.register("component-css/lib/hooks.js", Function("exports, require, module",
+
+require.register("component~css@0.0.6/lib/hooks.js", Function("exports, module",
 "/**\n\
  * Module Dependencies\n\
  */\n\
 \n\
-var each = require('each');\n\
-var css = require('./css');\n\
+var each = require('component~each@0.2.5');\n\
+var css = require('component~css@0.0.6/lib/css.js');\n\
 var cssShow = { position: 'absolute', visibility: 'hidden', display: 'block' };\n\
 var pnum = (/[+-]?(?:\\d*\\.|)\\d+(?:[eE][+-]?\\d+|)/).source;\n\
 var rnumnonpx = new RegExp( '^(' + pnum + ')(?!px)[a-z%]+$', 'i');\n\
 var rnumsplit = new RegExp( '^(' + pnum + ')(.*)$', 'i');\n\
 var rdisplayswap = /^(none|table(?!-c[ea]).+)/;\n\
-var styles = require('./styles');\n\
-var support = require('./support');\n\
-var swap = require('./swap');\n\
-var computed = require('./computed');\n\
+var styles = require('component~css@0.0.6/lib/styles.js');\n\
+var support = require('component~css@0.0.6/lib/support.js');\n\
+var swap = require('component~css@0.0.6/lib/swap.js');\n\
+var computed = require('component~css@0.0.6/lib/computed.js');\n\
 var cssExpand = [ \"Top\", \"Right\", \"Bottom\", \"Left\" ];\n\
 \n\
 /**\n\
@@ -2082,9 +2605,11 @@ function augmentWidthOrHeight(el, prop, extra, isBorderBox, styles) {\n\
 \n\
   return val;\n\
 }\n\
-//@ sourceURL=component-css/lib/hooks.js"
+\n\
+//# sourceURL=components/component/css/0.0.6/lib/hooks.js"
 ));
-require.register("component-css/lib/styles.js", Function("exports, require, module",
+
+require.register("component~css@0.0.6/lib/styles.js", Function("exports, module",
 "/**\n\
  * Expose `styles`\n\
  */\n\
@@ -2105,9 +2630,11 @@ function styles(el) {\n\
     return el.currentStyle;\n\
   }\n\
 }\n\
-//@ sourceURL=component-css/lib/styles.js"
+\n\
+//# sourceURL=components/component/css/0.0.6/lib/styles.js"
 ));
-require.register("component-css/lib/vendor.js", Function("exports, require, module",
+
+require.register("component~css@0.0.6/lib/vendor.js", Function("exports, module",
 "/**\n\
  * Module Dependencies\n\
  */\n\
@@ -2144,9 +2671,11 @@ function vendor(prop, style) {\n\
 \n\
   return original;\n\
 }\n\
-//@ sourceURL=component-css/lib/vendor.js"
+\n\
+//# sourceURL=components/component/css/0.0.6/lib/vendor.js"
 ));
-require.register("component-css/lib/support.js", Function("exports, require, module",
+
+require.register("component~css@0.0.6/lib/support.js", Function("exports, module",
 "/**\n\
  * Support values\n\
  */\n\
@@ -2248,16 +2777,18 @@ function computePixelPositionAndBoxSizingReliable() {\n\
 }\n\
 \n\
 \n\
-//@ sourceURL=component-css/lib/support.js"
+\n\
+//# sourceURL=components/component/css/0.0.6/lib/support.js"
 ));
-require.register("component-css/lib/computed.js", Function("exports, require, module",
+
+require.register("component~css@0.0.6/lib/computed.js", Function("exports, module",
 "/**\n\
  * Module Dependencies\n\
  */\n\
 \n\
-var debug = require('debug')('css:computed');\n\
-var withinDocument = require('within-document');\n\
-var styles = require('./styles');\n\
+var debug = require('visionmedia~debug@2.1.0')('css:computed');\n\
+var withinDocument = require('component~within-document@0.0.1');\n\
+var styles = require('component~css@0.0.6/lib/styles.js');\n\
 \n\
 /**\n\
  * Expose `computed`\n\
@@ -2289,7 +2820,7 @@ function computed(el, prop, precomputed) {\n\
 \n\
   if ('' === ret && !withinDocument(el)) {\n\
     debug('element not within document, try finding from style attribute');\n\
-    var style = require('./style');\n\
+    var style = require('component~css@0.0.6/lib/style.js');\n\
     ret = style(el, prop);\n\
   }\n\
 \n\
@@ -2299,458 +2830,157 @@ function computed(el, prop, precomputed) {\n\
   // IE returns zIndex value as an integer.\n\
   return undefined === ret ? ret : ret + '';\n\
 }\n\
-//@ sourceURL=component-css/lib/computed.js"
-));
-require.register("enyo-domready/index.js", Function("exports, require, module",
-"/*!\n\
- * Copyright (c) 2012 Matias Meno <m@tias.me>\n\
- * \n\
- * Original code (c) by Dustin Diaz 2012 - License MIT\n\
- */\n\
 \n\
-\n\
-/**\n\
- * Expose `domready`.\n\
- */\n\
-\n\
-module.exports = domready;\n\
-\n\
-\n\
-/**\n\
- *\n\
- * Cross browser implementation of the domready event\n\
- *\n\
- * @param {Function} ready - the callback to be invoked as soon as the dom is fully loaded.\n\
- * @api public\n\
- */\n\
-\n\
-function domready(ready) {\n\
- var fns = [], fn, f = false\n\
-    , doc = document\n\
-    , testEl = doc.documentElement\n\
-    , hack = testEl.doScroll\n\
-    , domContentLoaded = 'DOMContentLoaded'\n\
-    , addEventListener = 'addEventListener'\n\
-    , onreadystatechange = 'onreadystatechange'\n\
-    , readyState = 'readyState'\n\
-    , loaded = /^loade|c/.test(doc[readyState])\n\
-\n\
-  function flush(f) {\n\
-    loaded = 1\n\
-    while (f = fns.shift()) f()\n\
-  }\n\
-\n\
-  doc[addEventListener] && doc[addEventListener](domContentLoaded, fn = function () {\n\
-    doc.removeEventListener(domContentLoaded, fn, f)\n\
-    flush()\n\
-  }, f)\n\
-\n\
-\n\
-  hack && doc.attachEvent(onreadystatechange, fn = function () {\n\
-    if (/^c/.test(doc[readyState])) {\n\
-      doc.detachEvent(onreadystatechange, fn)\n\
-      flush()\n\
-    }\n\
-  })\n\
-\n\
-  return (ready = hack ?\n\
-    function (fn) {\n\
-      self != top ?\n\
-        loaded ? fn() : fns.push(fn) :\n\
-        function () {\n\
-          try {\n\
-            testEl.doScroll('left')\n\
-          } catch (e) {\n\
-            return setTimeout(function() { ready(fn) }, 50)\n\
-          }\n\
-          fn()\n\
-        }()\n\
-    } :\n\
-    function (fn) {\n\
-      loaded ? fn() : fns.push(fn)\n\
-    })\n\
-}//@ sourceURL=enyo-domready/index.js"
-));
-require.register("timoxley-dom-support/index.js", Function("exports, require, module",
-"var domready = require('domready')()\n\
-\n\
-module.exports = (function() {\n\
-\n\
-\tvar support,\n\
-\t\tall,\n\
-\t\ta,\n\
-\t\tselect,\n\
-\t\topt,\n\
-\t\tinput,\n\
-\t\tfragment,\n\
-\t\teventName,\n\
-\t\ti,\n\
-\t\tisSupported,\n\
-\t\tclickFn,\n\
-\t\tdiv = document.createElement(\"div\");\n\
-\n\
-\t// Setup\n\
-\tdiv.setAttribute( \"className\", \"t\" );\n\
-\tdiv.innerHTML = \"  <link/><table></table><a href='/a'>a</a><input type='checkbox'/>\";\n\
-\n\
-\t// Support tests won't run in some limited or non-browser environments\n\
-\tall = div.getElementsByTagName(\"*\");\n\
-\ta = div.getElementsByTagName(\"a\")[ 0 ];\n\
-\tif ( !all || !a || !all.length ) {\n\
-\t\treturn {};\n\
-\t}\n\
-\n\
-\t// First batch of tests\n\
-\tselect = document.createElement(\"select\");\n\
-\topt = select.appendChild( document.createElement(\"option\") );\n\
-\tinput = div.getElementsByTagName(\"input\")[ 0 ];\n\
-\n\
-\ta.style.cssText = \"top:1px;float:left;opacity:.5\";\n\
-\tsupport = {\n\
-\t\t// IE strips leading whitespace when .innerHTML is used\n\
-\t\tleadingWhitespace: ( div.firstChild.nodeType === 3 ),\n\
-\n\
-\t\t// Make sure that tbody elements aren't automatically inserted\n\
-\t\t// IE will insert them into empty tables\n\
-\t\ttbody: !div.getElementsByTagName(\"tbody\").length,\n\
-\n\
-\t\t// Make sure that link elements get serialized correctly by innerHTML\n\
-\t\t// This requires a wrapper element in IE\n\
-\t\thtmlSerialize: !!div.getElementsByTagName(\"link\").length,\n\
-\n\
-\t\t// Get the style information from getAttribute\n\
-\t\t// (IE uses .cssText instead)\n\
-\t\tstyle: /top/.test( a.getAttribute(\"style\") ),\n\
-\n\
-\t\t// Make sure that URLs aren't manipulated\n\
-\t\t// (IE normalizes it by default)\n\
-\t\threfNormalized: ( a.getAttribute(\"href\") === \"/a\" ),\n\
-\n\
-\t\t// Make sure that element opacity exists\n\
-\t\t// (IE uses filter instead)\n\
-\t\t// Use a regex to work around a WebKit issue. See #5145\n\
-\t\topacity: /^0.5/.test( a.style.opacity ),\n\
-\n\
-\t\t// Verify style float existence\n\
-\t\t// (IE uses styleFloat instead of cssFloat)\n\
-\t\tcssFloat: !!a.style.cssFloat,\n\
-\n\
-\t\t// Make sure that if no value is specified for a checkbox\n\
-\t\t// that it defaults to \"on\".\n\
-\t\t// (WebKit defaults to \"\" instead)\n\
-\t\tcheckOn: ( input.value === \"on\" ),\n\
-\n\
-\t\t// Make sure that a selected-by-default option has a working selected property.\n\
-\t\t// (WebKit defaults to false instead of true, IE too, if it's in an optgroup)\n\
-\t\toptSelected: opt.selected,\n\
-\n\
-\t\t// Test setAttribute on camelCase class. If it works, we need attrFixes when doing get/setAttribute (ie6/7)\n\
-\t\tgetSetAttribute: div.className !== \"t\",\n\
-\n\
-\t\t// Tests for enctype support on a form (#6743)\n\
-\t\tenctype: !!document.createElement(\"form\").enctype,\n\
-\n\
-\t\t// Makes sure cloning an html5 element does not cause problems\n\
-\t\t// Where outerHTML is undefined, this still works\n\
-\t\thtml5Clone: document.createElement(\"nav\").cloneNode( true ).outerHTML !== \"<:nav></:nav>\",\n\
-\n\
-\t\t// jQuery.support.boxModel DEPRECATED in 1.8 since we don't support Quirks Mode\n\
-\t\tboxModel: ( document.compatMode === \"CSS1Compat\" ),\n\
-\n\
-\t\t// Will be defined later\n\
-\t\tsubmitBubbles: true,\n\
-\t\tchangeBubbles: true,\n\
-\t\tfocusinBubbles: false,\n\
-\t\tdeleteExpando: true,\n\
-\t\tnoCloneEvent: true,\n\
-\t\tinlineBlockNeedsLayout: false,\n\
-\t\tshrinkWrapBlocks: false,\n\
-\t\treliableMarginRight: true,\n\
-\t\tboxSizingReliable: true,\n\
-\t\tpixelPosition: false\n\
-\t};\n\
-\n\
-\t// Make sure checked status is properly cloned\n\
-\tinput.checked = true;\n\
-\tsupport.noCloneChecked = input.cloneNode( true ).checked;\n\
-\n\
-\t// Make sure that the options inside disabled selects aren't marked as disabled\n\
-\t// (WebKit marks them as disabled)\n\
-\tselect.disabled = true;\n\
-\tsupport.optDisabled = !opt.disabled;\n\
-\n\
-\t// Test to see if it's possible to delete an expando from an element\n\
-\t// Fails in Internet Explorer\n\
-\ttry {\n\
-\t\tdelete div.test;\n\
-\t} catch( e ) {\n\
-\t\tsupport.deleteExpando = false;\n\
-\t}\n\
-\n\
-\tif ( !div.addEventListener && div.attachEvent && div.fireEvent ) {\n\
-\t\tdiv.attachEvent( \"onclick\", clickFn = function() {\n\
-\t\t\t// Cloning a node shouldn't copy over any\n\
-\t\t\t// bound event handlers (IE does this)\n\
-\t\t\tsupport.noCloneEvent = false;\n\
-\t\t});\n\
-\t\tdiv.cloneNode( true ).fireEvent(\"onclick\");\n\
-\t\tdiv.detachEvent( \"onclick\", clickFn );\n\
-\t}\n\
-\n\
-\t// Check if a radio maintains its value\n\
-\t// after being appended to the DOM\n\
-\tinput = document.createElement(\"input\");\n\
-\tinput.value = \"t\";\n\
-\tinput.setAttribute( \"type\", \"radio\" );\n\
-\tsupport.radioValue = input.value === \"t\";\n\
-\n\
-\tinput.setAttribute( \"checked\", \"checked\" );\n\
-\n\
-\t// #11217 - WebKit loses check when the name is after the checked attribute\n\
-\tinput.setAttribute( \"name\", \"t\" );\n\
-\n\
-\tdiv.appendChild( input );\n\
-\tfragment = document.createDocumentFragment();\n\
-\tfragment.appendChild( div.lastChild );\n\
-\n\
-\t// WebKit doesn't clone checked state correctly in fragments\n\
-\tsupport.checkClone = fragment.cloneNode( true ).cloneNode( true ).lastChild.checked;\n\
-\n\
-\t// Check if a disconnected checkbox will retain its checked\n\
-\t// value of true after appended to the DOM (IE6/7)\n\
-\tsupport.appendChecked = input.checked;\n\
-\n\
-\tfragment.removeChild( input );\n\
-\tfragment.appendChild( div );\n\
-\n\
-\t// Technique from Juriy Zaytsev\n\
-\t// http://perfectionkills.com/detecting-event-support-without-browser-sniffing/\n\
-\t// We only care about the case where non-standard event systems\n\
-\t// are used, namely in IE. Short-circuiting here helps us to\n\
-\t// avoid an eval call (in setAttribute) which can cause CSP\n\
-\t// to go haywire. See: https://developer.mozilla.org/en/Security/CSP\n\
-\tif ( !div.addEventListener ) {\n\
-\t\tfor ( i in {\n\
-\t\t\tsubmit: true,\n\
-\t\t\tchange: true,\n\
-\t\t\tfocusin: true\n\
-\t\t}) {\n\
-\t\t\teventName = \"on\" + i;\n\
-\t\t\tisSupported = ( eventName in div );\n\
-\t\t\tif ( !isSupported ) {\n\
-\t\t\t\tdiv.setAttribute( eventName, \"return;\" );\n\
-\t\t\t\tisSupported = ( typeof div[ eventName ] === \"function\" );\n\
-\t\t\t}\n\
-\t\t\tsupport[ i + \"Bubbles\" ] = isSupported;\n\
-\t\t}\n\
-\t}\n\
-\n\
-\t// Run tests that need a body at doc ready\n\
-\tdomready(function() {\n\
-\t\tvar container, div, tds, marginDiv,\n\
-\t\t\tdivReset = \"padding:0;margin:0;border:0;display:block;overflow:hidden;box-sizing:content-box;-moz-box-sizing:content-box;-webkit-box-sizing:content-box;\",\n\
-\t\t\tbody = document.getElementsByTagName(\"body\")[0];\n\
-\n\
-\t\tif ( !body ) {\n\
-\t\t\t// Return for frameset docs that don't have a body\n\
-\t\t\treturn;\n\
-\t\t}\n\
-\n\
-\t\tcontainer = document.createElement(\"div\");\n\
-\t\tcontainer.style.cssText = \"visibility:hidden;border:0;width:0;height:0;position:static;top:0;margin-top:1px\";\n\
-\t\tbody.insertBefore( container, body.firstChild );\n\
-\n\
-\t\t// Construct the test element\n\
-\t\tdiv = document.createElement(\"div\");\n\
-\t\tcontainer.appendChild( div );\n\
-\n\
-    //Check if table cells still have offsetWidth/Height when they are set\n\
-    //to display:none and there are still other visible table cells in a\n\
-    //table row; if so, offsetWidth/Height are not reliable for use when\n\
-    //determining if an element has been hidden directly using\n\
-    //display:none (it is still safe to use offsets if a parent element is\n\
-    //hidden; don safety goggles and see bug #4512 for more information).\n\
-    //(only IE 8 fails this test)\n\
-\t\tdiv.innerHTML = \"<table><tr><td></td><td>t</td></tr></table>\";\n\
-\t\ttds = div.getElementsByTagName(\"td\");\n\
-\t\ttds[ 0 ].style.cssText = \"padding:0;margin:0;border:0;display:none\";\n\
-\t\tisSupported = ( tds[ 0 ].offsetHeight === 0 );\n\
-\n\
-\t\ttds[ 0 ].style.display = \"\";\n\
-\t\ttds[ 1 ].style.display = \"none\";\n\
-\n\
-\t\t// Check if empty table cells still have offsetWidth/Height\n\
-\t\t// (IE <= 8 fail this test)\n\
-\t\tsupport.reliableHiddenOffsets = isSupported && ( tds[ 0 ].offsetHeight === 0 );\n\
-\n\
-\t\t// Check box-sizing and margin behavior\n\
-\t\tdiv.innerHTML = \"\";\n\
-\t\tdiv.style.cssText = \"box-sizing:border-box;-moz-box-sizing:border-box;-webkit-box-sizing:border-box;padding:1px;border:1px;display:block;width:4px;margin-top:1%;position:absolute;top:1%;\";\n\
-\t\tsupport.boxSizing = ( div.offsetWidth === 4 );\n\
-\t\tsupport.doesNotIncludeMarginInBodyOffset = ( body.offsetTop !== 1 );\n\
-\n\
-\t\t// NOTE: To any future maintainer, we've window.getComputedStyle\n\
-\t\t// because jsdom on node.js will break without it.\n\
-\t\tif ( window.getComputedStyle ) {\n\
-\t\t\tsupport.pixelPosition = ( window.getComputedStyle( div, null ) || {} ).top !== \"1%\";\n\
-\t\t\tsupport.boxSizingReliable = ( window.getComputedStyle( div, null ) || { width: \"4px\" } ).width === \"4px\";\n\
-\n\
-\t\t\t// Check if div with explicit width and no margin-right incorrectly\n\
-\t\t\t// gets computed margin-right based on width of container. For more\n\
-\t\t\t// info see bug #3333\n\
-\t\t\t// Fails in WebKit before Feb 2011 nightlies\n\
-\t\t\t// WebKit Bug 13343 - getComputedStyle returns wrong value for margin-right\n\
-\t\t\tmarginDiv = document.createElement(\"div\");\n\
-\t\t\tmarginDiv.style.cssText = div.style.cssText = divReset;\n\
-\t\t\tmarginDiv.style.marginRight = marginDiv.style.width = \"0\";\n\
-\t\t\tdiv.style.width = \"1px\";\n\
-\t\t\tdiv.appendChild( marginDiv );\n\
-\t\t\tsupport.reliableMarginRight =\n\
-\t\t\t\t!parseFloat( ( window.getComputedStyle( marginDiv, null ) || {} ).marginRight );\n\
-\t\t}\n\
-\n\
-\t\tif ( typeof div.style.zoom !== \"undefined\" ) {\n\
-\t\t\t// Check if natively block-level elements act like inline-block\n\
-\t\t\t// elements when setting their display to 'inline' and giving\n\
-\t\t\t// them layout\n\
-\t\t\t// (IE < 8 does this)\n\
-\t\t\tdiv.innerHTML = \"\";\n\
-\t\t\tdiv.style.cssText = divReset + \"width:1px;padding:1px;display:inline;zoom:1\";\n\
-\t\t\tsupport.inlineBlockNeedsLayout = ( div.offsetWidth === 3 );\n\
-\n\
-\t\t\t// Check if elements with layout shrink-wrap their children\n\
-\t\t\t// (IE 6 does this)\n\
-\t\t\tdiv.style.display = \"block\";\n\
-\t\t\tdiv.style.overflow = \"visible\";\n\
-\t\t\tdiv.innerHTML = \"<div></div>\";\n\
-\t\t\tdiv.firstChild.style.width = \"5px\";\n\
-\t\t\tsupport.shrinkWrapBlocks = ( div.offsetWidth !== 3 );\n\
-\n\
-\t\t\tcontainer.style.zoom = 1;\n\
-\t\t}\n\
-\n\
-\t\t// Null elements to avoid leaks in IE\n\
-\t\tbody.removeChild( container );\n\
-\t\tcontainer = div = tds = marginDiv = null;\n\
-\t});\n\
-\n\
-\t// Null elements to avoid leaks in IE\n\
-\tfragment.removeChild( div );\n\
-\tall = a = select = opt = input = fragment = div = null;\n\
-\n\
-\treturn support;\n\
-})();\n\
-//@ sourceURL=timoxley-dom-support/index.js"
-));
-require.register("timoxley-offset/index.js", Function("exports, require, module",
-"var support = require('dom-support')\n\
-var contains = require('within-document')\n\
-\n\
-/**\n\
- * Get offset of an element within the viewport.\n\
- *\n\
- * @api public\n\
- */\n\
-\n\
-module.exports = function offset(el) {\n\
-  var doc = el && el.ownerDocument\n\
-  if (!doc) return\n\
-\n\
-  // Make sure it's not a disconnected DOM node\n\
-  if (!contains(el)) return box\n\
-\n\
-  var body = doc.body\n\
-  if (body === el) {\n\
-    return bodyOffset(el)\n\
-  }\n\
-\n\
-  var box = { top: 0, left: 0 }\n\
-  if ( typeof el.getBoundingClientRect !== \"undefined\" ) {\n\
-    // If we don't have gBCR, just use 0,0 rather than error\n\
-    // BlackBerry 5, iOS 3 (original iPhone)\n\
-    box = el.getBoundingClientRect()\n\
-  }\n\
-\n\
-  var docEl = doc.documentElement\n\
-  var clientTop  = docEl.clientTop  || body.clientTop  || 0\n\
-  var clientLeft = docEl.clientLeft || body.clientLeft || 0\n\
-  var scrollTop  = window.pageYOffset || docEl.scrollTop\n\
-  var scrollLeft = window.pageXOffset || docEl.scrollLeft\n\
-\n\
-  return {\n\
-    top: box.top  + scrollTop  - clientTop,\n\
-    left: box.left + scrollLeft - clientLeft\n\
-  }\n\
-}\n\
-\n\
-function bodyOffset(body) {\n\
-  var top = body.offsetTop\n\
-  var left = body.offsetLeft\n\
-\n\
-  if (support.doesNotIncludeMarginInBodyOffset) {\n\
-    top  += parseFloat(body.style.marginTop || 0)\n\
-    left += parseFloat(body.style.marginLeft || 0)\n\
-  }\n\
-\n\
-  return {\n\
-    top: top,\n\
-    left: left\n\
-  }\n\
-}\n\
-//@ sourceURL=timoxley-offset/index.js"
+//# sourceURL=components/component/css/0.0.6/lib/computed.js"
 ));
 
-require.register("component-event/index.js", Function("exports, require, module",
-"var bind = window.addEventListener ? 'addEventListener' : 'attachEvent',\n\
-    unbind = window.removeEventListener ? 'removeEventListener' : 'detachEvent',\n\
-    prefix = bind !== 'addEventListener' ? 'on' : '';\n\
-\n\
+require.modules["component-css"] = require.modules["component~css@0.0.6"];
+require.modules["component~css"] = require.modules["component~css@0.0.6"];
+require.modules["css"] = require.modules["component~css@0.0.6"];
+
+
+require.register("webmodules~get-document@0.1.1", Function("exports, module",
+"\n\
 /**\n\
- * Bind `el` event `type` to `fn`.\n\
- *\n\
- * @param {Element} el\n\
- * @param {String} type\n\
- * @param {Function} fn\n\
- * @param {Boolean} capture\n\
- * @return {Function}\n\
- * @api public\n\
+ * Module exports.\n\
  */\n\
 \n\
-exports.bind = function(el, type, fn, capture){\n\
-  el[bind](prefix + type, fn, capture || false);\n\
-  return fn;\n\
-};\n\
+module.exports = getDocument;\n\
+\n\
+// defined by w3c\n\
+var DOCUMENT_NODE = 9;\n\
 \n\
 /**\n\
- * Unbind `el` event `type`'s callback `fn`.\n\
+ * Returns the `document` object associated with the given `node`, which may be\n\
+ * a DOM element, the Window object, a Selection, a Range. Basically any DOM\n\
+ * object that references the Document in some way, this function will find it.\n\
  *\n\
- * @param {Element} el\n\
- * @param {String} type\n\
- * @param {Function} fn\n\
- * @param {Boolean} capture\n\
- * @return {Function}\n\
- * @api public\n\
+ * @param {Mixed} node - DOM node, selection, or range in which to find the `document` object\n\
+ * @return {Document} the `document` object associated with `node`\n\
+ * @public\n\
  */\n\
 \n\
-exports.unbind = function(el, type, fn, capture){\n\
-  el[unbind](prefix + type, fn, capture || false);\n\
-  return fn;\n\
-};//@ sourceURL=component-event/index.js"
+function getDocument(node) {\n\
+  if (node.nodeType === DOCUMENT_NODE) {\n\
+    return node;\n\
+\n\
+  } else if (typeof node.ownerDocument != 'undefined' &&\n\
+      node.ownerDocument.nodeType === DOCUMENT_NODE) {\n\
+    return node.ownerDocument;\n\
+\n\
+  } else if (typeof node.document != 'undefined' &&\n\
+      node.document.nodeType === DOCUMENT_NODE) {\n\
+    return node.document;\n\
+\n\
+  } else if (node.parentNode) {\n\
+    return getDocument(node.parentNode);\n\
+\n\
+  // Range support\n\
+  } else if (node.commonAncestorContainer) {\n\
+    return getDocument(node.commonAncestorContainer);\n\
+\n\
+  } else if (node.startContainer) {\n\
+    return getDocument(node.startContainer);\n\
+\n\
+  // Selection support\n\
+  } else if (node.baseNode) {\n\
+    return getDocument(node.baseNode);\n\
+  }\n\
+}\n\
+\n\
+//# sourceURL=components/webmodules/get-document/0.1.1/index.js"
 ));
-require.register("tip/index.js", Function("exports, require, module",
+
+require.modules["webmodules-get-document"] = require.modules["webmodules~get-document@0.1.1"];
+require.modules["webmodules~get-document"] = require.modules["webmodules~get-document@0.1.1"];
+require.modules["get-document"] = require.modules["webmodules~get-document@0.1.1"];
+
+
+require.register("webmodules~bounding-client-rect@1.0.2", Function("exports, module",
+"\n\
+/**\n\
+ * Module dependencies.\n\
+ */\n\
+\n\
+var getDocument = require('webmodules~get-document@0.1.1');\n\
+var debug = require('visionmedia~debug@2.1.0')('bounding-client-rect');\n\
+\n\
+/**\n\
+ * Module exports.\n\
+ */\n\
+\n\
+module.exports = getBoundingClientRect;\n\
+\n\
+/**\n\
+ * Returns the \"bounding client rectangle\" of the given `TextNode`,\n\
+ * `HTMLElement`, or `Range`.\n\
+ *\n\
+ * @param {Node} node\n\
+ * @return {TextRectangle}\n\
+ * @public\n\
+ */\n\
+\n\
+function getBoundingClientRect (node) {\n\
+  var rect = null;\n\
+  var doc = getDocument(node);\n\
+\n\
+  if (node.nodeType === 3 /* TEXT_NODE */) {\n\
+    // see: http://stackoverflow.com/a/6966613/376773\n\
+    debug('creating a Range instance to measure TextNode %o', node);\n\
+    var range = doc.createRange();\n\
+    range.selectNodeContents(node);\n\
+    node = range;\n\
+  }\n\
+\n\
+  if ('function' === typeof node.getBoundingClientRect) {\n\
+    rect = node.getBoundingClientRect();\n\
+\n\
+    if (node.collapsed && rect.left === 0 && rect.top === 0) {\n\
+      // collapsed Range instances sometimes report all `0`s\n\
+      // see: http://stackoverflow.com/a/6847328/376773\n\
+      debug('injecting temporary SPAN to measure collapsed Range');\n\
+      var span = doc.createElement('span');\n\
+\n\
+      // Ensure span has dimensions and position by\n\
+      // adding a zero-width space character\n\
+      span.appendChild(doc.createTextNode('\\u200b'));\n\
+      node.insertNode(span);\n\
+      rect = span.getBoundingClientRect();\n\
+\n\
+      // Remove temp SPAN and glue any broken text nodes back together\n\
+      var spanParent = span.parentNode;\n\
+      spanParent.removeChild(span);\n\
+      spanParent.normalize();\n\
+    }\n\
+\n\
+  }\n\
+\n\
+  return rect;\n\
+}\n\
+\n\
+//# sourceURL=components/webmodules/bounding-client-rect/1.0.2/index.js"
+));
+
+require.modules["webmodules-bounding-client-rect"] = require.modules["webmodules~bounding-client-rect@1.0.2"];
+require.modules["webmodules~bounding-client-rect"] = require.modules["webmodules~bounding-client-rect@1.0.2"];
+require.modules["bounding-client-rect"] = require.modules["webmodules~bounding-client-rect@1.0.2"];
+
+
+require.register("tip", Function("exports, module",
 "/**\n\
  * Module dependencies.\n\
  */\n\
 \n\
-var bind = require('bind');\n\
-var Emitter = require('emitter');\n\
-var events = require('events');\n\
-var query = require('query');\n\
-var domify = require('domify');\n\
-var classes = require('classes');\n\
-var css = require('css');\n\
-var html = domify(require('./template.html'));\n\
-var offset = require('offset');\n\
+var css = require('component~css@0.0.6');\n\
+var bind = require('component~bind@1.0.0');\n\
+var query = require('component~query@0.0.3');\n\
+var domify = require('component~domify@1.3.0');\n\
+var events = require('component~events@1.0.9');\n\
+var Emitter = require('component~emitter@1.1.3');\n\
+var classes = require('component~classes@1.2.1');\n\
+var getBoundingClientRect = require('webmodules~bounding-client-rect@1.0.2');\n\
+\n\
+var html = domify(require('tip/template.html'));\n\
 \n\
 /**\n\
  * Expose `Tip`.\n\
@@ -2799,7 +3029,6 @@ function Tip(content, options) {\n\
   this.delay = options.delay || 300;\n\
   this.el = html.cloneNode(true);\n\
   this.events = events(this.el, this);\n\
-  this.winEvents = events(window, this);\n\
   this.classes = classes(this.el);\n\
   this.inner = query('.tip-inner', this.el);\n\
   this.message(content);\n\
@@ -2816,13 +3045,14 @@ Emitter(Tip.prototype);\n\
 /**\n\
  * Set tip `content`.\n\
  *\n\
- * @param {String|jQuery|Element} content\n\
+ * @param {String|Element} content\n\
  * @return {Tip} self\n\
  * @api public\n\
  */\n\
 \n\
 Tip.prototype.message = function(content){\n\
-  this.inner.innerHTML = content;\n\
+  if ('string' == typeof content) content = domify(content);\n\
+  this.inner.appendChild(content);\n\
   return this;\n\
 };\n\
 \n\
@@ -2836,7 +3066,6 @@ Tip.prototype.message = function(content){\n\
  */\n\
 \n\
 Tip.prototype.attach = function(el){\n\
-  var self = this;\n\
   this.target = el;\n\
   this.handleEvents = events(el, this);\n\
   this.handleEvents.bind('mouseover');\n\
@@ -2960,8 +3189,11 @@ Tip.prototype.show = function(el){\n\
   this.reposition();\n\
   this.emit('show', this.target);\n\
 \n\
-  this.winEvents.bind('resize', 'reposition');\n\
-  this.winEvents.bind('scroll', 'reposition');\n\
+  if (!this.winEvents) {\n\
+    this.winEvents = events(window, this);\n\
+    this.winEvents.bind('resize', 'reposition');\n\
+    this.winEvents.bind('scroll', 'reposition');\n\
+  }\n\
 \n\
   return this;\n\
 };\n\
@@ -3040,15 +3272,19 @@ Tip.prototype.replaceClass = function(name){\n\
 \n\
 Tip.prototype.offset = function(pos){\n\
   var pad = 15;\n\
-  var el = this.el;\n\
-  var target = this.target;\n\
 \n\
-  var ew = el.clientWidth;\n\
-  var eh = el.clientHeight;\n\
+  var tipRect = getBoundingClientRect(this.el);\n\
+  if (!tipRect) throw new Error('could not get bounding client rect of Tip element');\n\
+  var ew = tipRect.width;\n\
+  var eh = tipRect.height;\n\
 \n\
-  var to = offset(target);\n\
-  var tw = target.offsetWidth;\n\
-  var th = target.offsetHeight;\n\
+  var targetRect = getBoundingClientRect(this.target);\n\
+  if (!targetRect) throw new Error('could not get bounding client rect of `target`');\n\
+  var tw = targetRect.width;\n\
+  var th = targetRect.height;\n\
+\n\
+  var to = offset(targetRect, document);\n\
+  if (!to) throw new Error('could not determine page offset of `target`');\n\
 \n\
   switch (pos) {\n\
     case 'top':\n\
@@ -3119,6 +3355,8 @@ Tip.prototype.cancelHide = function(){\n\
 Tip.prototype.hide = function(ms){\n\
   var self = this;\n\
 \n\
+  this.emit('hiding');\n\
+\n\
   // duration\n\
   if (ms) {\n\
     this._hide = setTimeout(bind(this, this.hide), ms);\n\
@@ -3140,119 +3378,51 @@ Tip.prototype.hide = function(ms){\n\
  * Hide the tip without potential animation.\n\
  *\n\
  * @return {Tip}\n\
- * @api\n\
+ * @api public\n\
  */\n\
 \n\
 Tip.prototype.remove = function(){\n\
-  this.winEvents.unbind('resize', 'reposition');\n\
-  this.winEvents.unbind('scroll', 'reposition');\n\
+  if (this.winEvents) {\n\
+    this.winEvents.unbind();\n\
+    this.winEvents = null;\n\
+  }\n\
   this.emit('hide');\n\
 \n\
   var parent = this.el.parentNode;\n\
   if (parent) parent.removeChild(this.el);\n\
   return this;\n\
 };\n\
-//@ sourceURL=tip/index.js"
+\n\
+/**\n\
+ * Extracted from `timoxley/offset`, but directly using a\n\
+ * TextRectangle instead of getting another version.\n\
+ *\n\
+ * @param {TextRectangle} box - result from a `getBoundingClientRect()` call\n\
+ * @param {Document} doc - Document instance to use\n\
+ * @return {Object} an object with `top` and `left` Number properties\n\
+ * @api private\n\
+ */\n\
+\n\
+function offset (box, doc) {\n\
+  var body = doc.body || doc.getElementsByTagName('body')[0];\n\
+  var docEl = doc.documentElement || body.parentNode;\n\
+  var clientTop  = docEl.clientTop  || body.clientTop  || 0;\n\
+  var clientLeft = docEl.clientLeft || body.clientLeft || 0;\n\
+  var scrollTop  = window.pageYOffset || docEl.scrollTop;\n\
+  var scrollLeft = window.pageXOffset || docEl.scrollLeft;\n\
+\n\
+  return {\n\
+    top: box.top  + scrollTop  - clientTop,\n\
+    left: box.left + scrollLeft - clientLeft\n\
+  };\n\
+}\n\
+\n\
+//# sourceURL=index.js"
 ));
 
+require.define("tip/template.html", "<div class=\"tip tip-hide\">\n  <div class=\"tip-arrow\"></div>\n  <div class=\"tip-inner\"></div>\n</div>");
+
+require.modules["tip"] = require.modules["tip"];
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-require.register("tip/template.html", Function("exports, require, module",
-"module.exports = '<div class=\"tip tip-hide\">\\n\
-  <div class=\"tip-arrow\"></div>\\n\
-  <div class=\"tip-inner\"></div>\\n\
-</div>';//@ sourceURL=tip/template.html"
-));
-require.alias("component-bind/index.js", "tip/deps/bind/index.js");
-require.alias("component-bind/index.js", "bind/index.js");
-
-require.alias("component-emitter/index.js", "tip/deps/emitter/index.js");
-require.alias("component-emitter/index.js", "emitter/index.js");
-require.alias("component-indexof/index.js", "component-emitter/deps/indexof/index.js");
-
-require.alias("component-query/index.js", "tip/deps/query/index.js");
-require.alias("component-query/index.js", "query/index.js");
-
-require.alias("component-events/index.js", "tip/deps/events/index.js");
-require.alias("component-events/index.js", "events/index.js");
-require.alias("component-event/index.js", "component-events/deps/event/index.js");
-
-require.alias("component-delegate/index.js", "component-events/deps/delegate/index.js");
-require.alias("discore-closest/index.js", "component-delegate/deps/closest/index.js");
-require.alias("discore-closest/index.js", "component-delegate/deps/closest/index.js");
-require.alias("component-matches-selector/index.js", "discore-closest/deps/matches-selector/index.js");
-require.alias("component-query/index.js", "component-matches-selector/deps/query/index.js");
-
-require.alias("discore-closest/index.js", "discore-closest/index.js");
-require.alias("component-event/index.js", "component-delegate/deps/event/index.js");
-
-require.alias("component-domify/index.js", "tip/deps/domify/index.js");
-require.alias("component-domify/index.js", "domify/index.js");
-
-require.alias("component-classes/index.js", "tip/deps/classes/index.js");
-require.alias("component-classes/index.js", "classes/index.js");
-require.alias("component-indexof/index.js", "component-classes/deps/indexof/index.js");
-
-require.alias("component-css/index.js", "tip/deps/css/index.js");
-require.alias("component-css/lib/css.js", "tip/deps/css/lib/css.js");
-require.alias("component-css/lib/prop.js", "tip/deps/css/lib/prop.js");
-require.alias("component-css/lib/swap.js", "tip/deps/css/lib/swap.js");
-require.alias("component-css/lib/style.js", "tip/deps/css/lib/style.js");
-require.alias("component-css/lib/hooks.js", "tip/deps/css/lib/hooks.js");
-require.alias("component-css/lib/styles.js", "tip/deps/css/lib/styles.js");
-require.alias("component-css/lib/vendor.js", "tip/deps/css/lib/vendor.js");
-require.alias("component-css/lib/support.js", "tip/deps/css/lib/support.js");
-require.alias("component-css/lib/computed.js", "tip/deps/css/lib/computed.js");
-require.alias("component-css/index.js", "tip/deps/css/index.js");
-require.alias("component-css/index.js", "css/index.js");
-require.alias("component-each/index.js", "component-css/deps/each/index.js");
-require.alias("component-to-function/index.js", "component-each/deps/to-function/index.js");
-require.alias("component-props/index.js", "component-to-function/deps/props/index.js");
-
-require.alias("component-type/index.js", "component-each/deps/type/index.js");
-
-require.alias("visionmedia-debug/index.js", "component-css/deps/debug/index.js");
-require.alias("visionmedia-debug/debug.js", "component-css/deps/debug/debug.js");
-
-require.alias("ianstormtaylor-to-camel-case/index.js", "component-css/deps/to-camel-case/index.js");
-require.alias("ianstormtaylor-to-space-case/index.js", "ianstormtaylor-to-camel-case/deps/to-space-case/index.js");
-require.alias("ianstormtaylor-to-no-case/index.js", "ianstormtaylor-to-space-case/deps/to-no-case/index.js");
-
-require.alias("component-within-document/index.js", "component-css/deps/within-document/index.js");
-
-require.alias("component-css/index.js", "component-css/index.js");
-require.alias("timoxley-offset/index.js", "tip/deps/offset/index.js");
-require.alias("timoxley-offset/index.js", "offset/index.js");
-require.alias("timoxley-dom-support/index.js", "timoxley-offset/deps/dom-support/index.js");
-require.alias("enyo-domready/index.js", "timoxley-dom-support/deps/domready/index.js");
-
-require.alias("component-within-document/index.js", "timoxley-offset/deps/within-document/index.js");
-
-
-require.alias("component-event/index.js", "tip/deps/event/index.js");
-require.alias("component-event/index.js", "event/index.js");
+require("tip");
