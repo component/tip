@@ -1,4 +1,9 @@
 
+2.3.2 / 2015-01-14
+==================
+
+  * use an elimination strategy for the `suggested()` function (#50, @TooTallNate)
+
 2.3.1 / 2014-12-17
 ==================
 
