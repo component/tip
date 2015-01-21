@@ -288,6 +288,23 @@ Tip.prototype.suggested = function(pos, off){
   // too far to the left
   if (off.left < left) good.left = false;
 
+  var i;
+  var positions = pos.split(/\s+/);
+
+  // attempt to give the preferred position first, consider "bottom right"
+  for (i = 0; i < positions.length; i++) {
+    if (!good[positions[i]]) break;
+    if (i === positions.length - 1) {
+      // last one!
+      return pos;
+    }
+  }
+
+  // attempt to get close to preferred position, i.e. "bottom" or "right"
+  for (i = 0; i < positions.length; i++) {
+    if (good[positions[i]]) return positions[i];
+  }
+
   if (good[pos]) return pos;
   if (good.top) return 'top';
   if (good.bottom) return 'bottom';
