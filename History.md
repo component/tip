@@ -1,4 +1,9 @@
 
+2.3.4 / 2015-01-20
+==================
+
+  * index: fix "bottom right" (bi-directional) position case in `suggested()`
+
 2.3.3 / 2015-01-20
 ==================
 
