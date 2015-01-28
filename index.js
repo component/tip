@@ -58,6 +58,7 @@ function Tip(content, options) {
   Emitter.call(this);
   this.classname = '';
   this.delay = options.delay || 300;
+  this.pad = null == options.pad ? 15 : options.pad;
   this.el = html.cloneNode(true);
   this.events = events(this.el, this);
   this.classes = classes(this.el);
@@ -336,7 +337,7 @@ Tip.prototype.replaceClass = function(name){
  */
 
 Tip.prototype.offset = function(pos){
-  var pad = 15;
+  var pad = this.pad;
 
   var tipRect = getBoundingClientRect(this.el);
   if (!tipRect) throw new Error('could not get bounding client rect of Tip element');
