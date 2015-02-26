@@ -10,7 +10,7 @@
     "ui"
   ],
   "dependencies": {
-    "bounding-client-rect": "1.0.4",
+    "bounding-client-rect": "1.0.5",
     "component-bind": "*",
     "component-classes": "1.2.1",
     "component-css": "0.0.6",
