@@ -44,7 +44,7 @@ var tip = require('tip');
 tip('a[title]', { delay: 300 });
 ```
 
-### new Tip(content)
+### new Tip(content, [options])
 
   Create a new tip with `content` being
   either a string, html, element, etc.
