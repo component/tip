@@ -65,6 +65,7 @@ function Tip(content, options) {
   this.inner = query('.tip-inner', this.el);
   this.message(content);
   this.position('top');
+  this.static = !!options.static;
   if (Tip.effect) this.effect(Tip.effect);
 }
 
@@ -221,7 +222,7 @@ Tip.prototype.show = function(el){
   this.reposition();
   this.emit('show', this.target);
 
-  if (!this.winEvents) {
+  if (!this.winEvents && !this.static) {
     this.winEvents = events(window, this);
     this.winEvents.bind('resize', 'reposition');
     this.winEvents.bind('scroll', 'reposition');
