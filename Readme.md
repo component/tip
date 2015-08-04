@@ -38,6 +38,7 @@ $ npm install component-tip
   Attach a `Tip` to an element, and display the `title`
   attribute's contents on hover. Optionally apply a hide `delay`
   in milliseconds.
+  Also if `static` is true the tip will be fixed to its initial position.
 
 ```js
 var tip = require('tip');
