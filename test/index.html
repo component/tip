@@ -64,7 +64,8 @@
       <a href="#" id="markup">Markup</a>
       <a href="#" id="auto-top">Auto</a>
       <a href="#" id="auto-bottom">Auto</a>
-      <a href="#" id="maru">Maru</a>
+      <a href="#" id="component">component</a>
+	  <a href="#" id="component-static">component (static)</a>
       <a href="#" title="I'm using a title attr">Hover</a>
       <a href="#" title="I'm another link">Hover</a>
       <a href="#" id="hover-value">Hover Value</a>
@@ -90,8 +91,11 @@
         });
       })
 
-      var maru = new Tip('<img src="http://www.lifelounge.com.au/resources/IMGRELATED/maru-magic-show-catbag-youtube-cat-adventure.jpg" width="200" height="100" />');
-      maru.show('#maru');
+      var component = new Tip('<img src="https://avatars2.githubusercontent.com/u/1687071?v=3" width="200" height="200" />');
+      component.show('#component');
+
+      var component_static = new Tip('<img src="https://avatars2.githubusercontent.com/u/1687071?v=3" width="200" height="200" />', { static: true });
+      component_static.show('#component-static');
 
       var tip = new Tip('<input type="search" placeholder="Search" />');
       tip.position('top');
