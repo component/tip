@@ -9,6 +9,7 @@ var domify = require('domify');
 var events = require('events');
 var Emitter = require('emitter');
 var classes = require('classes');
+var viewport = require('viewport');
 var getBoundingClientRect = require('bounding-client-rect');
 
 var html = domify(require('./template.html'));
@@ -239,15 +240,10 @@ Tip.prototype.show = function(el){
 
 Tip.prototype.reposition = function(){
   var pos = this._position;
-  var off = this.offset(pos);
-  var newpos = this._auto && this.suggested(pos, off);
-  if (newpos && newpos !== pos) {
-    pos = newpos;
-    off = this.offset(pos);
-  }
+  if (this._auto) pos = this.suggested(pos);
   this.replaceClass(pos);
   this.emit('reposition');
-  css(this.el, off);
+  css(this.el, this.offset(pos));
 };
 
 /**
@@ -261,57 +257,76 @@ Tip.prototype.reposition = function(){
  * @api private
  */
 
-Tip.prototype.suggested = function(pos, off){
-  var el = this.el;
+Tip.prototype.suggested = function(pos){
+  var target = getBoundingClientRect(this.target);
+  var h = this.el.clientHeight;
+  var w = this.el.clientWidth;
+  var port = viewport.value;
 
-  var ew = el.clientWidth;
-  var eh = el.clientHeight;
-  var top = window.scrollY;
-  var left = window.scrollX;
-  var w = window.innerWidth;
-  var h = window.innerHeight;
-
-  var good = {
-    top: true,
-    bottom: true,
-    left: true,
-    right: true
+  // see where we have spare room
+  var room = {
+    top: target.top - h,
+    bottom: port.height - target.bottom - h,
+    left: target.left - w,
+    right: port.width - target.right - w
   };
 
-  // too low
-  if (off.top + eh > top + h) good.bottom = false;
-
-  // too high
-  if (off.top < top) good.top = false;
-
-  // too far to the right
-  if (off.left + ew > left + w) good.right = false;
-
-  // too far to the left
-  if (off.left < left) good.left = false;
-
-  var i;
   var positions = pos.split(/\s+/);
+  var primary = choosePrimary(positions[0], room);
+  return chooseSecondary(primary, positions[1], this, w, h) || pos;
+};
 
-  // attempt to give the preferred position first, consider "bottom right"
-  for (i = 0; i < positions.length; i++) {
-    if (!good[positions[i]]) break;
-    if (i === positions.length - 1) {
-      // last one!
-      return pos;
-    }
+function choosePrimary(prefered, room){
+  // top, bottom, left, right in order of preference
+  var order = [prefered, opposite[prefered], adjacent[prefered], opposite[adjacent[prefered]]];
+  var best = -Infinity;
+  var bestPos
+  for (var i = 0, len = order.length; i < len; i++) {
+    var prefered = order[i];
+    var space = room[prefered];
+    // the first side it fits completely
+    if (space > 0) return prefered;
+    // less chopped of than other sides
+    if (space > best) best = space, bestPos = prefered;
   }
+  return bestPos;
+}
 
-  // attempt to get close to preferred position, i.e. "bottom" or "right"
-  for (i = 0; i < positions.length; i++) {
-    if (good[positions[i]]) return positions[i];
+function chooseSecondary(primary, prefered, tip, w, h){
+  var port = viewport.value;
+  // top, top left, top right in order of preference
+  var order = prefered
+    ? [primary + ' ' + prefered, primary, primary + ' ' + opposite[prefered]]
+    : [primary, primary + ' ' + adjacent[primary], primary + ' ' + opposite[adjacent[primary]]];
+  var bestPos;
+  var best = 0;
+  var max = w * h;
+  for (var i = 0, len = order.length; i < len; i++) {
+    var pos = order[i];
+    var off = tip.offset(pos);
+    var offRight = off.left + w;
+    var offBottom = off.top + h;
+    var yVisible = Math.min(off.top < port.top ? offBottom - port.top : port.bottom - off.top, h);
+    var xVisible = Math.min(off.left < port.left ? offRight - port.left : port.right - off.left, w);
+    var area = xVisible * yVisible;
+    // the first position that shows all the tip
+    if (area == max) return pos;
+    // shows more of the tip than the other positions
+    if (area > best) best = area, bestPos = pos;
   }
+  return bestPos;
+}
 
-  if (good[pos]) return pos;
-  if (good.top) return 'top';
-  if (good.bottom) return 'bottom';
-  if (good.left) return 'left';
-  if (good.right) return 'right';
+var opposite = {
+  top: 'bottom', bottom: 'top',
+  left: 'right', right: 'left'
+};
+
+var adjacent = {
+  top: 'right',
+  left: 'top',
+  bottom: 'left',
+  right: 'bottom'
 };
 
 /**
@@ -393,6 +408,26 @@ Tip.prototype.offset = function(pos){
       return {
         top: to.top + th,
         left: to.left + tw / 2 - pad
+      }
+    case 'left top':
+      return {
+        top: to.top + th / 2 - eh,
+        left: to.left - ew
+      }
+    case 'left bottom':
+      return {
+        top: to.top + th / 2,
+        left: to.left - ew
+      }
+    case 'right top':
+      return {
+        top: to.top + th / 2 - eh,
+        left: to.left + tw
+      }
+    case 'right bottom':
+      return {
+        top: to.top + th / 2,
+        left: to.left + tw
       }
     default:
       throw new Error('invalid position "' + pos + '"');

@@ -10,6 +10,7 @@
     "ui"
   ],
   "dependencies": {
+    "viewport": "2",
     "bounding-client-rect": "1.0.5",
     "component-bind": "*",
     "component-classes": "1.2.1",
