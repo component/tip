@@ -243,7 +243,7 @@ Tip.prototype.reposition = function(){
   if (this._auto) pos = this.suggested(pos);
   this.replaceClass(pos);
   this.emit('reposition');
-  css(this.el, this.offset(pos));
+  css(this.el, constrainLeft( this.offset(pos), this.el ) );
 };
 
 /**
@@ -368,70 +368,84 @@ Tip.prototype.offset = function(pos){
   var to = offset(targetRect, document);
   if (!to) throw new Error('could not determine page offset of `target`');
 
+  var pos;
   switch (pos) {
     case 'top':
-      return {
+      pos = {
         top: to.top - eh,
         left: to.left + tw / 2 - ew / 2
-      }
+      };
+      break;
     case 'bottom':
-      return {
+      pos = {
         top: to.top + th,
         left: to.left + tw / 2 - ew / 2
-      }
+      };
+      break;
     case 'right':
-      return {
+      pos = {
         top: to.top + th / 2 - eh / 2,
         left: to.left + tw
-      }
+      };
+      break;
     case 'left':
-      return {
+      pos = {
         top: to.top + th / 2 - eh / 2,
         left: to.left - ew
-      }
+      };
+      break;
     case 'top left':
-      return {
+      pos = {
         top: to.top - eh,
         left: to.left + tw / 2 - ew + pad
-      }
+      };
+      break;
     case 'top right':
-      return {
+      pos = {
         top: to.top - eh,
         left: to.left + tw / 2 - pad
-      }
+      };
+      break;
     case 'bottom left':
-      return {
+      pos = {
         top: to.top + th,
         left: to.left + tw / 2 - ew + pad
-      }
+      };
+      break;
     case 'bottom right':
-      return {
+      pos = {
         top: to.top + th,
         left: to.left + tw / 2 - pad
-      }
+      };
+      break;
     case 'left top':
-      return {
+      pos = {
         top: to.top + th / 2 - eh,
         left: to.left - ew
-      }
+      };
+      break;
     case 'left bottom':
-      return {
+      pos = {
         top: to.top + th / 2,
         left: to.left - ew
-      }
+      };
+      break;
     case 'right top':
-      return {
+      pos = {
         top: to.top + th / 2 - eh,
         left: to.left + tw
-      }
+      };
+      break;
     case 'right bottom':
-      return {
+      pos = {
         top: to.top + th / 2,
         left: to.left + tw
-      }
+      };
+      break;
     default:
       throw new Error('invalid position "' + pos + '"');
   }
+  return pos;
 };
 
 /**
@@ -517,4 +531,16 @@ function offset (box, doc) {
     top: box.top  + scrollTop  - clientTop,
     left: box.left + scrollLeft - clientLeft
   };
+}
+
+/**
+ * Constrain a left to keep the element in the window
+ * @param  {Object} pl proposed left
+ * @param  {Number} ew tip element width
+ * @return {Number}    the best width
+ */
+function constrainLeft ( off, el ) {
+  var ew = getBoundingClientRect(el).width;
+  off.left = Math.max( 0, Math.min( off.left, viewport.value.width - ew ) );
+  return off;
 }
