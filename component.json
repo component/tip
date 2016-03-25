@@ -10,7 +10,6 @@
     "ui"
   ],
   "dependencies": {
-    "jkroso/viewport": "2.0.1",
     "component/bind": "*",
     "component/emitter": "1.1.3",
     "component/query": "0.0.3",
