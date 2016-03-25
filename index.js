@@ -9,9 +9,33 @@ var domify = require('domify');
 var events = require('events');
 var Emitter = require('emitter');
 var classes = require('classes');
+var raf = require('raf');
 var getBoundingClientRect = require('bounding-client-rect');
 
 var html = domify(require('./template.html'));
+
+
+// inspired by https://github.com/jkroso/viewport
+function updateViewport( v ) {
+  v.top = window.scrollY;
+  v.left = window.scrollX;
+  v.width = window.innerWidth;
+  v.height = window.innerHeight;
+  v.right = v.left + v.width;
+  v.bottom = v.top + v.height;
+  return v;
+}
+
+var viewport = updateViewport({});
+
+function onViewportChange() {
+  updateViewport( viewport );
+}
+
+// don't debounce these because they don't so any work that requires layout
+window.addEventListener('resize', onViewportChange, true)
+window.addEventListener('scroll', onViewportChange, true)
+
 
 /**
  * Expose `Tip`.
@@ -62,6 +86,7 @@ function Tip(content, options) {
   this.el = html.cloneNode(true);
   this.events = events(this.el, this);
   this.classes = classes(this.el);
+  this.reposition = bind( this, Tip.prototype.reposition );
   this.inner = query('.tip-inner', this.el);
   this.message(content);
   this.position('top');
@@ -224,8 +249,8 @@ Tip.prototype.show = function(el){
 
   if (!this.winEvents && !this.static) {
     this.winEvents = events(window, this);
-    this.winEvents.bind('resize', 'reposition');
-    this.winEvents.bind('scroll', 'reposition');
+    this.winEvents.bind('resize', 'debouncedReposition');
+    this.winEvents.bind('scroll', 'debouncedReposition');
   }
 
   return this;
@@ -238,17 +263,22 @@ Tip.prototype.show = function(el){
  */
 
 Tip.prototype.reposition = function(){
+  this.willReposition = null;
   var pos = this._position;
-  var off = this.offset(pos);
-  var newpos = this._auto && this.suggested(pos, off);
-  if (newpos && newpos !== pos) {
-    pos = newpos;
-    off = this.offset(pos);
-  }
+  if (this._auto) pos = this.suggested(pos);
   this.replaceClass(pos);
   this.emit('reposition');
-  css(this.el, off);
+  css(this.el, constrainLeft( this.offset(pos), this.el ) );
 };
+
+/**
+ * Reposition the tip on the next available animation frame
+ *
+ * @api private
+ */
+Tip.prototype.debouncedReposition = function() {
+  this.willReposition = raf( this.reposition );
+}
 
 /**
  * Compute the "suggested" position favouring `pos`.
@@ -261,57 +291,74 @@ Tip.prototype.reposition = function(){
  * @api private
  */
 
-Tip.prototype.suggested = function(pos, off){
-  var el = this.el;
+Tip.prototype.suggested = function(pos){
+  var target = getBoundingClientRect(this.target);
+  var h = this.el.clientHeight;
+  var w = this.el.clientWidth;
 
-  var ew = el.clientWidth;
-  var eh = el.clientHeight;
-  var top = window.scrollY;
-  var left = window.scrollX;
-  var w = window.innerWidth;
-  var h = window.innerHeight;
-
-  var good = {
-    top: true,
-    bottom: true,
-    left: true,
-    right: true
+  // see where we have spare room
+  var room = {
+    top: target.top - h,
+    bottom: viewport.height - target.bottom - h,
+    left: target.left - w,
+    right: viewport.width - target.right - w
   };
 
-  // too low
-  if (off.top + eh > top + h) good.bottom = false;
-
-  // too high
-  if (off.top < top) good.top = false;
-
-  // too far to the right
-  if (off.left + ew > left + w) good.right = false;
-
-  // too far to the left
-  if (off.left < left) good.left = false;
-
-  var i;
   var positions = pos.split(/\s+/);
+  var primary = choosePrimary(positions[0], room);
+  return chooseSecondary(primary, positions[1], this, w, h) || pos;
+};
 
-  // attempt to give the preferred position first, consider "bottom right"
-  for (i = 0; i < positions.length; i++) {
-    if (!good[positions[i]]) break;
-    if (i === positions.length - 1) {
-      // last one!
-      return pos;
-    }
+function choosePrimary(prefered, room){
+  // top, bottom, left, right in order of preference
+  var order = [prefered, opposite[prefered], adjacent[prefered], opposite[adjacent[prefered]]];
+  var best = -Infinity;
+  var bestPos
+  for (var i = 0, len = order.length; i < len; i++) {
+    var prefered = order[i];
+    var space = room[prefered];
+    // the first side it fits completely
+    if (space > 0) return prefered;
+    // less chopped of than other sides
+    if (space > best) best = space, bestPos = prefered;
   }
+  return bestPos;
+}
 
-  // attempt to get close to preferred position, i.e. "bottom" or "right"
-  for (i = 0; i < positions.length; i++) {
-    if (good[positions[i]]) return positions[i];
+function chooseSecondary(primary, prefered, tip, w, h){
+  // top, top left, top right in order of preference
+  var order = prefered
+    ? [primary + ' ' + prefered, primary, primary + ' ' + opposite[prefered]]
+    : [primary, primary + ' ' + adjacent[primary], primary + ' ' + opposite[adjacent[primary]]];
+  var bestPos;
+  var best = 0;
+  var max = w * h;
+  for (var i = 0, len = order.length; i < len; i++) {
+    var pos = order[i];
+    var off = tip.offset(pos);
+    var offRight = off.left + w;
+    var offBottom = off.top + h;
+    var yVisible = Math.min(off.top < viewport.top ? offBottom - viewport.top : viewport.bottom - off.top, h);
+    var xVisible = Math.min(off.left < viewport.left ? offRight - viewport.left : viewport.right - off.left, w);
+    var area = xVisible * yVisible;
+    // the first position that shows all the tip
+    if (area == max) return pos;
+    // shows more of the tip than the other positions
+    if (area > best) best = area, bestPos = pos;
   }
+  return bestPos;
+}
 
-  if (good[pos]) return pos;
-  if (good.top) return 'top';
-  if (good.bottom) return 'bottom';
-  if (good.left) return 'left';
-  if (good.right) return 'right';
+var opposite = {
+  top: 'bottom', bottom: 'top',
+  left: 'right', right: 'left'
+};
+
+var adjacent = {
+  top: 'right',
+  left: 'top',
+  bottom: 'left',
+  right: 'bottom'
 };
 
 /**
@@ -353,50 +400,84 @@ Tip.prototype.offset = function(pos){
   var to = offset(targetRect, document);
   if (!to) throw new Error('could not determine page offset of `target`');
 
+  var pos;
   switch (pos) {
     case 'top':
-      return {
+      pos = {
         top: to.top - eh,
         left: to.left + tw / 2 - ew / 2
-      }
+      };
+      break;
     case 'bottom':
-      return {
+      pos = {
         top: to.top + th,
         left: to.left + tw / 2 - ew / 2
-      }
+      };
+      break;
     case 'right':
-      return {
+      pos = {
         top: to.top + th / 2 - eh / 2,
         left: to.left + tw
-      }
+      };
+      break;
     case 'left':
-      return {
+      pos = {
         top: to.top + th / 2 - eh / 2,
         left: to.left - ew
-      }
+      };
+      break;
     case 'top left':
-      return {
+      pos = {
         top: to.top - eh,
         left: to.left + tw / 2 - ew + pad
-      }
+      };
+      break;
     case 'top right':
-      return {
+      pos = {
         top: to.top - eh,
         left: to.left + tw / 2 - pad
-      }
+      };
+      break;
     case 'bottom left':
-      return {
+      pos = {
         top: to.top + th,
         left: to.left + tw / 2 - ew + pad
-      }
+      };
+      break;
     case 'bottom right':
-      return {
+      pos = {
         top: to.top + th,
         left: to.left + tw / 2 - pad
-      }
+      };
+      break;
+    case 'left top':
+      pos = {
+        top: to.top + th / 2 - eh,
+        left: to.left - ew
+      };
+      break;
+    case 'left bottom':
+      pos = {
+        top: to.top + th / 2,
+        left: to.left - ew
+      };
+      break;
+    case 'right top':
+      pos = {
+        top: to.top + th / 2 - eh,
+        left: to.left + tw
+      };
+      break;
+    case 'right bottom':
+      pos = {
+        top: to.top + th / 2,
+        left: to.left + tw
+      };
+      break;
     default:
       throw new Error('invalid position "' + pos + '"');
   }
+  return pos;
 };
 
 /**
@@ -453,6 +534,10 @@ Tip.prototype.remove = function(){
     this.winEvents.unbind();
     this.winEvents = null;
   }
+  if (this._willReposition) {
+    raf.cancel( this.willReposition );
+    this.willReposition = null;
+  }
   this.emit('hide');
 
   var parent = this.el.parentNode;
@@ -482,4 +567,16 @@ function offset (box, doc) {
     top: box.top  + scrollTop  - clientTop,
     left: box.left + scrollLeft - clientLeft
   };
+}
+
+/**
+ * Constrain a left to keep the element in the window
+ * @param  {Object} pl proposed left
+ * @param  {Number} ew tip element width
+ * @return {Number}    the best width
+ */
+function constrainLeft ( off, el ) {
+  var ew = getBoundingClientRect(el).width;
+  off.left = Math.max( 0, Math.min( off.left, viewport.width - ew ) );
+  return off;
 }
