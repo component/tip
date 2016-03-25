@@ -9,10 +9,33 @@ var domify = require('domify');
 var events = require('events');
 var Emitter = require('emitter');
 var classes = require('classes');
-var viewport = require('viewport');
+var raf = require('raf');
 var getBoundingClientRect = require('bounding-client-rect');
 
 var html = domify(require('./template.html'));
+
+
+// inspired by https://github.com/jkroso/viewport
+function updateViewport( v ) {
+  v.top = window.scrollY;
+  v.left = window.scrollX;
+  v.width = window.innerWidth;
+  v.height = window.innerHeight;
+  v.right = v.left + v.width;
+  v.bottom = v.top + v.height;
+  return v;
+}
+
+var viewport = updateViewport({});
+
+function onViewportChange() {
+  updateViewport( viewport );
+}
+
+// don't debounce these because they don't so any work that requires layout
+window.addEventListener('resize', onViewportChange, true)
+window.addEventListener('scroll', onViewportChange, true)
+
 
 /**
  * Expose `Tip`.
@@ -63,6 +86,7 @@ function Tip(content, options) {
   this.el = html.cloneNode(true);
   this.events = events(this.el, this);
   this.classes = classes(this.el);
+  this.reposition = bind( this, Tip.prototype.reposition );
   this.inner = query('.tip-inner', this.el);
   this.message(content);
   this.position('top');
@@ -225,8 +249,8 @@ Tip.prototype.show = function(el){
 
   if (!this.winEvents && !this.static) {
     this.winEvents = events(window, this);
-    this.winEvents.bind('resize', 'reposition');
-    this.winEvents.bind('scroll', 'reposition');
+    this.winEvents.bind('resize', 'debouncedReposition');
+    this.winEvents.bind('scroll', 'debouncedReposition');
   }
 
   return this;
@@ -239,12 +263,22 @@ Tip.prototype.show = function(el){
  */
 
 Tip.prototype.reposition = function(){
+  this.willReposition = null;
   var pos = this._position;
   if (this._auto) pos = this.suggested(pos);
   this.replaceClass(pos);
   this.emit('reposition');
   css(this.el, constrainLeft( this.offset(pos), this.el ) );
 };
+
+/**
+ * Reposition the tip on the next available animation frame
+ *
+ * @api private
+ */
+Tip.prototype.debouncedReposition = function() {
+  this.willReposition = raf( this.reposition );
+}
 
 /**
  * Compute the "suggested" position favouring `pos`.
@@ -261,14 +295,13 @@ Tip.prototype.suggested = function(pos){
   var target = getBoundingClientRect(this.target);
   var h = this.el.clientHeight;
   var w = this.el.clientWidth;
-  var port = viewport.value;
 
   // see where we have spare room
   var room = {
     top: target.top - h,
-    bottom: port.height - target.bottom - h,
+    bottom: viewport.height - target.bottom - h,
     left: target.left - w,
-    right: port.width - target.right - w
+    right: viewport.width - target.right - w
   };
 
   var positions = pos.split(/\s+/);
@@ -293,7 +326,6 @@ function choosePrimary(prefered, room){
 }
 
 function chooseSecondary(primary, prefered, tip, w, h){
-  var port = viewport.value;
   // top, top left, top right in order of preference
   var order = prefered
     ? [primary + ' ' + prefered, primary, primary + ' ' + opposite[prefered]]
@@ -306,8 +338,8 @@ function chooseSecondary(primary, prefered, tip, w, h){
     var off = tip.offset(pos);
     var offRight = off.left + w;
     var offBottom = off.top + h;
-    var yVisible = Math.min(off.top < port.top ? offBottom - port.top : port.bottom - off.top, h);
-    var xVisible = Math.min(off.left < port.left ? offRight - port.left : port.right - off.left, w);
+    var yVisible = Math.min(off.top < viewport.top ? offBottom - viewport.top : viewport.bottom - off.top, h);
+    var xVisible = Math.min(off.left < viewport.left ? offRight - viewport.left : viewport.right - off.left, w);
     var area = xVisible * yVisible;
     // the first position that shows all the tip
     if (area == max) return pos;
@@ -502,6 +534,10 @@ Tip.prototype.remove = function(){
     this.winEvents.unbind();
     this.winEvents = null;
   }
+  if (this._willReposition) {
+    raf.cancel( this.willReposition );
+    this.willReposition = null;
+  }
   this.emit('hide');
 
   var parent = this.el.parentNode;
@@ -541,6 +577,6 @@ function offset (box, doc) {
  */
 function constrainLeft ( off, el ) {
   var ew = getBoundingClientRect(el).width;
-  off.left = Math.max( 0, Math.min( off.left, viewport.value.width - ew ) );
+  off.left = Math.max( 0, Math.min( off.left, viewport.width - ew ) );
   return off;
 }

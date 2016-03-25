@@ -10,7 +10,6 @@
     "ui"
   ],
   "dependencies": {
-    "viewport": "2",
     "bounding-client-rect": "1.0.5",
     "component-bind": "*",
     "component-classes": "1.2.1",
@@ -19,7 +18,8 @@
     "component-events": "1.0.9",
     "component-query": "0.0.3",
     "domify": "1.3.0",
-    "html-browserify": "0.0.4"
+    "html-browserify": "0.0.4",
+    "raf": "3.2.0",
   },
   "browser": {
     "bind": "component-bind",
