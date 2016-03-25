@@ -1,8 +1,18 @@
 
+3.0.0 / 2016-03-25
+==================
+
+  * test: fix "maru" image link
+  * use `component-raf` dep
+  * fix package, remove viewport from component
+  * replace viewport with a custom listener and raf events
+  * Constrain the tip to the screen left and right, as best as possible (#56)
+  * improve positioning (#53)
+
 2.5.0 / 2015-08-04
 ==================
 
- * core: add `static` support
+  * core: add `static` support
 
 2.4.1 / 2015-02-26
 ==================
