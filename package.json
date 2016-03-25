@@ -17,6 +17,7 @@
     "component-emitter": "1.1.3",
     "component-events": "1.0.9",
     "component-query": "0.0.3",
+    "component-raf": "1.2.0",
     "domify": "1.3.0",
     "html-browserify": "0.0.4",
     "raf": "3.2.0"
@@ -27,7 +28,8 @@
     "css": "component-css",
     "emitter": "component-emitter",
     "events": "component-events",
-    "query": "component-query"
+    "query": "component-query",
+    "raf": "component-raf"
   },
   "browserify": {
     "transform": "html-browserify"
