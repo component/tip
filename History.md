@@ -1,4 +1,9 @@
 
+3.0.1 / 2016-03-29
+==================
+
+  * prevent the auto-picker from picking invalid combos (#57, @blowery)
+
 3.0.0 / 2016-03-25
 ==================
 
