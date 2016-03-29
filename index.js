@@ -306,6 +306,9 @@ Tip.prototype.suggested = function(pos){
 
   var positions = pos.split(/\s+/);
   var primary = choosePrimary(positions[0], room);
+  if( positions[1] === primary || positions[1] === opposite[primary] ) {
+    positions[1] = null;
+  }
   return chooseSecondary(primary, positions[1], this, w, h) || pos;
 };
 
