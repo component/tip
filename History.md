@@ -1,4 +1,10 @@
 
+3.0.3 / 2016-04-01
+==================
+
+  * component, package: bump component-events dependency
+  * index: fall back to require('component-*') for node compat
+
 3.0.2 / 2016-04-01
 ==================
 
