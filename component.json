@@ -13,7 +13,7 @@
     "component/bind": "*",
     "component/emitter": "1.1.3",
     "component/query": "0.0.3",
-    "component/events": "1.0.9",
+    "component/events": "1.0.10",
     "component/domify": "1.3.0",
     "component/classes": "1.2.6",
     "component/css": "0.0.8",

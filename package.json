@@ -15,7 +15,7 @@
     "component-classes": "1.2.6",
     "component-css": "0.0.8",
     "component-emitter": "1.1.3",
-    "component-events": "1.0.9",
+    "component-events": "1.0.10",
     "component-query": "0.0.3",
     "component-raf": "1.2.0",
     "domify": "1.3.0",
