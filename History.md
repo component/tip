@@ -1,4 +1,9 @@
 
+3.0.2 / 2016-04-01
+==================
+
+  * component, package: bump component-classes and -css dependencies
+
 3.0.1 / 2016-03-29
 ==================
 
