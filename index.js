@@ -2,14 +2,49 @@
  * Module dependencies.
  */
 
-var css = require('css');
-var bind = require('bind');
-var query = require('query');
+try {
+  var css = require('css');
+} catch (err) {
+  var css = require('component-css');
+}
+
+try {
+  var bind = require('bind');
+} catch (err) {
+  var bind = require('component-bind');
+}
+
+try {
+  var query = require('query');
+} catch (err) {
+  var query = require('component-query');
+}
+
+try {
+  var events = require('events');
+} catch (err) {
+  var events = require('component-events');
+}
+
+try {
+  var Emitter = require('emitter');
+} catch (err) {
+  var Emitter = require('component-emitter');
+}
+
+try {
+  var classes = require('classes');
+} catch (err) {
+  var classes = require('component-classes');
+}
+
+try {
+  var raf = require('raf');
+} catch (err) {
+  var raf = require('component-raf');
+}
+
 var domify = require('domify');
-var events = require('events');
-var Emitter = require('emitter');
-var classes = require('classes');
-var raf = require('raf');
 var getBoundingClientRect = require('bounding-client-rect');
 
 var html = domify(require('./template.html'));
